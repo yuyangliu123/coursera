@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .row{
+            display: flex;
+            align-items: stretch;
+        }
+        .row .label{
+            flex: 0 0 auto;
+        }
+        .row .container{
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .row .dish{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pasta{
+            background-color: blue;
+        }
+        .pizza{
+            background-color: red;
+        }
+        .burrito{
+            background-color: green;
+        }
+    </style>
+
+</head>
+<body>
+    
+    <div class="row">
+        <div class="label">Prefered dishes</div>
+        <div class="container">
+            <div class="dish pasta" style="flex-basis:  35%;">35%</div>
+            <div class="dish pizza" style="flex-basis: 50%;">50%</div>
+            <div class="dish burrito" style="flex-basis: 15%;">15%</div>
+        </div>
+    </div>
+</body>
+</html>

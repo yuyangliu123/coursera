@@ -1,0 +1,34 @@
+.App{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: calc(100vh - 160px);
+    text-align: center;
+}
+
+.subArticle{
+    display: flex;
+}
+
+
+.subArticle main{
+    width: calc(70% - 10px);
+    background-color: lightgoldenrodyellow;
+}
+
+aside{
+    font-style: italic;
+}
+
+
+
+
+
+/*div{
+    min-height: calc(100vh - 160px);
+}
+
+div div{
+    flex-direction: row;
+    margin-top: 10px;
+}*/

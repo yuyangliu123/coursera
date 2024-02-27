@@ -1,0 +1,76 @@
+header img {
+  width: 141.8px;
+  height: 285px;
+}
+
+footer img {
+  width: 42.54px;
+  height: 85.5px;
+}
+
+body {
+  background-color: #EDEFEE;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  margin: 3rem 5% 3rem;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+header img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+nav .grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+}
+nav .grid-item {
+  size: 30px;
+  list-style-type: none;
+  margin: 5px 20px 0px;
+  font-size: 30px;
+}
+nav a {
+  text-decoration: none;
+  color: red;
+}
+
+.main {
+  margin: 0 2em 0;
+}
+
+#subArticle {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+}
+#subArticle .grid-item {
+  margin: 0 2em 0;
+}
+
+footer {
+  margin: 0 2em 0;
+}
+footer .grid-container {
+  display: grid;
+  background-color: blanchedalmond;
+  grid-template-columns: repeat(12, auto);
+}
+footer .grid-container div {
+  margin: 5px;
+}
+footer #logo {
+  grid-column: 2/3;
+}
+footer #copyRight {
+  grid-column: 11/12;
+  text-align: center;
+  margin-top: 3em;
+}/*# sourceMappingURL=style.css.map */

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /*css clock*/
+.clock {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border: 4px solid black;
+  border-radius: 50%;
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  right: 50%;
+  width: 0.5%;
+  
+  background: black;
+  transform-origin: bottom;
+  animation-iteration-count: infinite;
+}
+
+.second-hand {
+  height: 30%;
+  animation: rotate 60s  infinite linear;
+}
+
+.minute-hand {
+    height: 50%;
+    animation: rotate 6s  infinite linear;
+}
+
+
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/*css clock end*/
+
+/*js clock*/
+.clock1 {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border: 4px solid black;
+  border-radius: 50%;
+}
+.hand1 {
+  position: absolute;
+  bottom: 50%;
+  right: 50%;
+  width: 0.5%;
+  
+  background: black;
+  transform-origin: bottom;
+  animation-iteration-count: infinite;
+}
+.second-hand1 {
+  height: 50%;
+}
+
+.minute-hand1 {
+    height: 30%;
+}
+
+/*js clock end*/
+</style>
+</head>
+
+<body>
+
+  <div class="clock">
+    <div class="hand second-hand"></div>
+    <div class="hand minute-hand"></div>
+  </div>
+
+<div class="clock1">
+  <div class="hand1 second-hand1"></div>
+  <div class="hand1 minute-hand1"></div>
+</div>
+
+<!--js clock-->
+<script>
+  const secondHand = document.querySelector('.second-hand1');
+  const minuteHand = document.querySelector('.minute-hand1');
+  
+  function setDate() {
+    const now = new Date();
+  
+    const seconds = now.getSeconds();
+    const secondsDegrees = ((seconds / 60) * 360) + 90;
+    secondHand.style.transform = `rotate(${secondsDegrees}deg)`;
+  
+    const minutes = now.getMinutes();
+    const minutesDegrees = ((minutes / 60) * 360) + 90;
+    minuteHand.style.transform = `rotate(${minutesDegrees}deg)`;
+  }
+  
+  setInterval(setDate, 1000);
+  </script>
+<!--js clock end-->
+</body>
+</html>
+

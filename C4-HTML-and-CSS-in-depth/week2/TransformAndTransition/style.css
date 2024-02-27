@@ -1,0 +1,19 @@
+.letters p{
+    text-align: center;
+    background-color: rgb(250, 150, 100);
+    width: 70px;
+    margin-right: 1.5px;
+    border-radius: 15%;
+    border-color: rgb(250, 125, 75);
+    border-style: solid;
+}
+
+.letters p:nth-child(2n):hover{
+    transform: rotateY(360deg);
+    transition: 0.5s;
+}
+
+.letters p:nth-child(2n+1):hover{
+    transform: rotateY(360deg);
+    transition: 1.5s;
+}

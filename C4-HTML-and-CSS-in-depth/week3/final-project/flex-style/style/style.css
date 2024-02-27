@@ -1,0 +1,62 @@
+footer img, header img {
+  width: 141.8px;
+  height: 285px;
+}
+
+body {
+  background-color: #EDEFEE;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  margin: 3rem 5% 3rem;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+header img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+nav ul {
+  text-align: center;
+}
+nav li {
+  size: 30px;
+  list-style-type: none;
+  display: inline-block;
+  margin: 5px 20px 0px;
+  font-size: 30px;
+}
+nav a {
+  text-decoration: none;
+  color: red;
+}
+
+#subArticle {
+  display: flex;
+}
+
+footer .container {
+  display: flex;
+  justify-content: space-around;
+  width: auto;
+  height: 10%;
+  background-color: blanchedalmond;
+}
+footer .container div {
+  background-color: red;
+  margin: 5px;
+}
+footer .copyright {
+  position: relative;
+}
+footer .copyright p {
+  position: absolute;
+  top: 70%;
+}/*# sourceMappingURL=style.css.map */

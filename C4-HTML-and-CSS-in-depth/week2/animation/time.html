@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+     <p id="clock"></p>
+     <p id="clock1"></p>
+     <script>
+        //print time
+        const now = new Date();
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+        const seconds = now.getSeconds();
+        const time = hour + ":" + minute + ":" + seconds;
+        document.querySelector("#clock").innerHTML = time;
+        
+        
+        //time animation
+        const target = document.querySelector("#clock1");
+        const settime = () => {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const seconds = now.getSeconds();
+            const time = hour + ":" + minute + ":" + seconds;
+            target.innerHTML = time;
+        }
+
+    setInterval(settime, 1000);
+     </script>
+
+
+
+</body>
+</html>
