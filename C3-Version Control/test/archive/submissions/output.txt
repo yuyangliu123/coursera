@@ -1,5 +1,0 @@
-total 2
--rw-r--r-- 1 User 197121  0 Feb  7 16:27 output.txt
--rw-r--r-- 1 User 197121  0 Feb  7 10:30 test.js
--rw-r--r-- 1 User 197121 21 Feb  7 16:23 test.txt
--rw-r--r-- 1 User 197121 15 Feb  7 16:26 test1.txt
