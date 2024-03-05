@@ -1,0 +1,20 @@
+table.caculator div{
+    background-color: #808080;
+}
+
+p{
+    color: red;
+}
+
+table div{
+    background-color: gray;
+    color: white;
+    width: 50px;
+    height: 30px;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+    line-height: 34px;
+}
+

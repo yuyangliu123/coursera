@@ -24,7 +24,7 @@ function App() {
     <Routes>
       <Route path='/' element={<Homepage/>}/>
       <Route path='/about-me' element={<AboutMe/>}/>
-      <Route path='/contact' element={<Contact/>}></Route>
+      <Route path='/contact' element={<Contact/>}/>
     </Routes>
     <Testtext/>
     <p>now is {time.toString()}</p>
