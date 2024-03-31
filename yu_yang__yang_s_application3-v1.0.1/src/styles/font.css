@@ -1,0 +1,21 @@
+@font-face {
+  font-display: swap;
+  font-style: normal;
+  src: url("/public/fonts/MarkaziTextBold.ttf");
+  font-family: "Markazi Text";
+  font-weight: 700;
+}
+@font-face {
+  font-display: swap;
+  font-style: normal;
+  src: url("/public/fonts/MarkaziTextMedium.ttf");
+  font-family: "Markazi Text";
+  font-weight: 500;
+}
+@font-face {
+  font-display: swap;
+  font-style: normal;
+  src: url("/public/fonts/KarlaRegular.ttf");
+  font-family: "Karla";
+  font-weight: 400;
+}
