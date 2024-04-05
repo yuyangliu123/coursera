@@ -55,8 +55,7 @@ const Card=({imageSrc,title,description})=>{
                 </div>
             </VStack>
         </StyledCard>
-        
     )
 }
 
-export default Card  
+export default Card
