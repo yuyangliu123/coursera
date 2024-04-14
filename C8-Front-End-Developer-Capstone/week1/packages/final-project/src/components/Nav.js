@@ -1,71 +1,50 @@
 import styled from 'styled-components';
-
-const StyledNav = styled.div`
-  nav {
-    background-color: #EDEFEE;
-  }
-  .container {
-    display: flex;
-  }
-  ul {
-    list-style-type: none;
-    display: flex;
-    justify-content: space-between;
-    margin-left:8.33%;
-    width: 100%;
-    li {
-      text-decoration: none;
-      font-family: "Karla", sans-serif;
-      font-optical-sizing: auto;
-      font-weight: 500;
-      font-style: normal;
-      font-size:18px;
-    }
-    a {
-      text-decoration: none;
-      color: black;
-    }
-  }
-`;
-
+import { Box, HStack,VStack } from "@chakra-ui/react";
+import theme from "../theme.js"
+import { Text } from "@chakra-ui/react";
+import {Routes, Route, Link} from "react-router-dom"
 const Nav = () => {
   const navElement = [
     {
-      text: "HOME",
+      name: "HOME",
       href: "/"
     },
     {
-      text: "ABOUT",
-      href: "about"
+      name: "ABOUT",
+      href: "/about"
     },
     {
-      text: "MENU",
-      href: "menu"
+      name: "MENU",
+      href: "/menu"
     },
     {
-      text: "RESERVATIONS",
-      href: "reservations"
+      name: "RESERVATIONS",
+      href: "/reservation"
     },
     {
-      text: "ORDER ONLINE",
-      href: "order-online"
+      name: "ORDER ONLINE",
+      href: "/order"
+    },
+    {
+      name: "LOGIN",
+      href: "/login"
     }
   ];
 
   return (
-    <StyledNav>
-      <nav className="nav">
-        <div className="container">
-          <img src="./images/Logo.svg" />
-          <ul>
-            {navElement.map((element) => {
-              return <li><a href={element.href}>{element.text}</a></li>
-            })}
-          </ul>
-        </div>
-      </nav>
-    </StyledNav>
+    <>
+    <HStack
+      justifyContent="space-between"
+      width="100%"
+      >
+      <img src="./images/Logo.svg" />
+      {navElement.map((element) => {
+      return <Link to={element.href}><Text textStyle="StyledNav">{element.name}</Text></Link>
+      })}
+    </HStack>
+    </>
   );
 }
 
 export default Nav;
+
