@@ -1,33 +1,27 @@
 import './App.css';
 import { Link, Route, Routes } from 'react-router-dom';
 import Nav from './components/Nav';
-import Header from './components/Header';
-import Main from './components/Main';
-import Footer from './components/Footer';
-import styled from 'styled-components';
 
-const StyledGlobal=styled.div`
-div.container{
-  margin:0 16.66%
-}
-`
+
+import {ChakraProvider} from "@chakra-ui/react"
+import theme from './theme';
+import FullScreenSection from './components/FullScreenSection';
+
+import Home from './components/Home/Home';
+import BookingForm from './components/Booking/BookingForm';
+
 
 function App() {
   return (
-    <StyledGlobal>
+    <ChakraProvider theme={theme} >
+      <FullScreenSection backgroundColor="#FFFFFF" height="100px" padding="30px 0 0">
       <Nav/>
-      <Header/>
-      <nav>
-        <Link to="/">nav</Link>
-      </nav>
-      <Main/>
-
+      </FullScreenSection>
       <Routes>
-        <Route path='/' element={<Nav/>}/>
+        <Route path="/" element={<Home/>}/>
+        <Route path="/reservation" element={<BookingForm/>}/>
       </Routes>
-      <Footer/>
-    
-    </StyledGlobal>
+    </ChakraProvider>
   );
 }
 
