@@ -12,21 +12,22 @@ const theme = extendTheme({
         lineHeight: '1.6',
         fontWeight: 500,
         letterSpacing: '.05em',
-        fontSize:"18px",
+        fontSize:{base:"1.5em",lg:"0.9em",xl:"1.2em"}
     },
     StyledH1: {
       // you can also use responsive styles
       fontFamily: `'Markazi Text Variable', serif`,
-      fontSize: "64px",
+      fontSize:{xl:"64px",base:"51.2px"},
       fontWeight: 500,
       lineHeight: '110%',
       letterSpacing: '-2%',
-      color:"#F4CE14"
+      color:"#F4CE14",
+      width:{base:"fit-content",lg:"auto"}
     },
     StyledH2: {
       // you can also use responsive styles
       fontFamily: `'Markazi Text Variable', serif`,
-      fontSize: "40px",
+      fontSize:{xl:"40px",base:"32px"},
       fontWeight: 500,
       lineHeight: '110%',
       letterSpacing: '-2%',
@@ -35,7 +36,7 @@ const theme = extendTheme({
     StyledText: {
       // you can also use responsive styles
       fontFamily: `'Karla', serif`,
-      fontSize: "20px",
+      fontSize:"20px",
       fontWeight: 500,
       lineHeight: '110%',
       letterSpacing: '-2%',
@@ -54,7 +55,7 @@ const theme = extendTheme({
     CardTitle:{
       fontFamily: `'Karla', serif`,
       fontSize: "18px",
-      fontWeight: 600,
+      fontWeight: 800,
       lineHeight: '110%',
       letterSpacing: '-2%',
       color:"#000000"
@@ -68,12 +69,19 @@ const theme = extendTheme({
     },
     HighlightText:{
       fontFamily: `'Karla', serif`,
-      fontSize: "18px",
+      fontSize: "105%",
       fontWeight: 500,
       lineHeight: '110%',
       letterSpacing: '-2%',
       color:"RED"
     }
+  },
+  breakpoints : {
+    sm: "576px",
+    md: "768px",
+    lg: "992px",
+    xl: "1200px",
+    xxl: "1400px"
   },
   styles:{
     global:{

@@ -2,6 +2,7 @@ import { Box, Image, Text, Tooltip } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
 import styled from "styled-components"
+import theme from "../../../theme";
 
 const CustomerCard = () => {
     const [customers, setCustomers] = useState([]);
@@ -64,7 +65,24 @@ const CustomerCard = () => {
         infinite: true,
         speed: 500,
         slidesToShow: 3,
-        slidesToScroll: 1
+        slidesToScroll: 1,
+        //rwd setting
+        responsive: [
+            {
+              breakpoint: 992,
+              settings: {
+                slidesToShow: 2,
+                slidesToScroll: 1,
+              },
+            },
+            {
+                breakpoint: 768,
+                settings: {
+                  slidesToShow: 1,
+                  slidesToScroll: 1,
+                },
+              },
+          ],
     };
 
     const StyledDiv=styled.div`
@@ -75,9 +93,9 @@ const CustomerCard = () => {
 
     return (
         <StyledDiv>
-            <Box backgroundColor="#EDEFEE" height="500px">
+            <Box backgroundColor="#EDEFEE" height="auto" paddingBottom="5vh">
                 <Box margin="0  15%" padding="3em 0 0 0">
-                    <Box  as="h1" noOfLines={1} textStyle="StyledH1" color="black">
+                    <Box  as="h1" textStyle="StyledH1" color="black">
                         What Our Customer saying!
                     </Box>
                     <Slider {...settings}>

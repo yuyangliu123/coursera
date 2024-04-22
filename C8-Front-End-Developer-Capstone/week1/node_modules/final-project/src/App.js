@@ -1,6 +1,6 @@
 import './App.css';
-import { Link, Route, Routes } from 'react-router-dom';
-import Nav from './components/Nav';
+import {Route, Routes } from 'react-router-dom';
+import Nav from './components/Nav/Nav';
 
 
 import {ChakraProvider} from "@chakra-ui/react"
@@ -9,14 +9,19 @@ import FullScreenSection from './components/FullScreenSection';
 
 import Home from './components/Home/Home';
 import BookingForm from './components/Booking/BookingForm';
+import MobileNav from './components/Nav/MobileNav';
+import FloatingNav from './components/FloatingNav';
 
 
 function App() {
   return (
     <ChakraProvider theme={theme} >
-      <FullScreenSection backgroundColor="#FFFFFF" height="100px" padding="30px 0 0">
-      <Nav/>
-      </FullScreenSection>
+      <FloatingNav>
+        <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="2vh 0">
+          <Nav/>
+          <MobileNav/>
+        </FullScreenSection>
+      </FloatingNav>
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/reservation" element={<BookingForm/>}/>

@@ -5,14 +5,14 @@ import * as yup from 'yup';
 import {
   Box,
   Button,
-  Checkbox,
   Flex,
-  FormControl,
-  FormLabel,
   Input,
   VStack,
-  Select
+  Select,
+  Stack
 } from "@chakra-ui/react";
+import theme from '../../theme';
+import { color } from 'framer-motion';
 
 //--------------------------------------------------------------------------------------------------//
 // Define Validation Rules
@@ -120,8 +120,9 @@ const numberOfPeopleRef = useRef();
 
 
   return (
-    <Flex bg="gray.100" align="center" justify="center" h="100vh">
-      <Box bg="white" p={6} rounded="md">
+    <VStack bg="gray.100"  height="auto" width="100vw" padding={{base:"20vh 0", xl:"23vh 0"}}>
+      <Box margin="auto" >
+      <Box bg="white" padding={10} rounded="md" height="auto" width={{base:"30vh",xl:"50vh"}} fontSize={{base:"1.5em",lg:"2em"}}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={4} align="flex-start">
             <label>First Name</label>
@@ -170,12 +171,12 @@ const numberOfPeopleRef = useRef();
             {errors.occasion && <span>This field is required</span>}
 
 
-            <Button type="submit" disabled={!isValid}>Order!</Button>
+            <Button type="submit" size={{xl:"lg",base:"md"}} backgroundColor={isValid?"#F4CE14":"lightgrey"} disabled={!isValid}>Order!</Button>
           </VStack>
         </form>
       </Box>
-    </Flex>
+      </Box>
+    </VStack>
   );
 }
-
 export default BookingForm

@@ -1,38 +1,43 @@
 import { VStack,
-    HStack,
-    Heading,
-    Image,
-    Box,
-    Text,
-    WrapItem,
-Button} from "@chakra-ui/react"
-import FullScreenSection from "../FullScreenSection.js"
+  Image,
+  Box,
+  Text,
+  WrapItem,
+Button,
+Stack} from "@chakra-ui/react"
 import theme from "../../theme.js"
 
 const Header = () => {
 return (
-  <>
-    <VStack align="start">
-      <Box  as="h1" noOfLines={1} textStyle="StyledH1">
-        Little Lemon
-      </Box>
-      <Box as="h2" noOfLines={1} textStyle="StyledH2">
-        Chicago
-      </Box>
-      <Text width="45%" textStyle="StyledText">
-        We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.
-      </Text>
-      <WrapItem>
-        <Button sx={theme.textStyles.StyledButton.baseStyle} size="lg">Reserve a Table</Button>
-      </WrapItem>
-    </VStack>
-    <Image src="./images/restauranfood.jpg"
-      alt="restauran food"
-      height="430px"
-      width="430px"
-      borderRadius="16"
-      margin="1% 0"></Image>
-  </>
+<>
+  <VStack align={{ base: "center", lg: "start" }} id="top">
+    <Stack
+    direction={{base:"column",lg:"column"}}
+    alignItems={{base:"center",lg:"start"}}
+    width="100%"
+    >
+    <Box  as="h1"  textStyle="StyledH1" textAlign="center">
+      Little Lemon
+    </Box>
+    <Box as="h2" noOfLines={1} textStyle="StyledH2">
+      Chicago
+    </Box>
+    </Stack>
+    <Text width={{base:"90%",lg:"45%"}} textStyle="StyledText">
+      We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.
+    </Text>
+    <WrapItem>
+      <a href="/reservation"><Button sx={theme.textStyles.StyledButton.baseStyle} size={{lg:"lg",base:"md"}}>Reserve a Table</Button></a>
+    </WrapItem>
+  </VStack>
+  <Image src="./images/restauranfood.jpg"
+    alt="restauran food"
+    display={{lg:"block",base:"none"}}
+    height="430px"
+    width="430px"
+    borderRadius="16"
+    margin="1% 0"></Image>
+</>
 )
 }
 

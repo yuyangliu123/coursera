@@ -1,28 +1,33 @@
-import { VStack, HStack, Box, Image, Text, Link } from "@chakra-ui/react";
-import About from "./About";
-
+import { VStack, Box, Image, Text,  Stack, useBreakpointValue, Divider } from "@chakra-ui/react";
+import theme from "../../theme";
+import { HashLink } from "react-router-hash-link";
 const Footer = () => {
     const contact = [{
         th: "Doormat Navigation",
         td: [{
-            name:"Home",
-            link:"/"
-        },{
-            name:"About",
-            link:"about"
-        },{
-            name:"Menu",
-            link:"menu"
-        },{
-            name:"Reservations",
-            link:"reservations"
-        },{
-            name:"Order Online",
-            link:"order"
-        },{
-            name:"Login",
-            link:"login"
-        }]
+            name: "Home",
+            href: "/#top"
+          },
+          {
+            name: "About",
+            href: "/#about"
+          },
+          {
+            name: "Menu",
+            href: "/#menu"
+          },
+          {
+            name: "Reservations",
+            href: "/reservation"
+          },
+          {
+            name: "Order Online",
+            href: "/order"
+          },
+          {
+            name: "Login",
+            href: "/login"
+          }]
     }, {
         th: "Contact",
         td: [{
@@ -31,43 +36,46 @@ const Footer = () => {
                     LaSalle Street Chicago,
                     Illinois 60602
                     USA`,
-            link: "https://www.google.com/maps/search/Little+Lemon+331+E+Chicago+LaSalle+Street+Chicago,+Illinois+60602+USA/@41.8859606,-87.6360187,15z/data=!3m1!4b1?entry=ttu"
+            href: "https://www.google.com/maps/search/Little+Lemon+331+E+Chicago+LaSalle+Street+Chicago,+Illinois+60602+USA/@41.8859606,-87.6360187,15z/data=!3m1!4b1?entry=ttu"
         }, {
             name: "Phone: +55 11 9999-9999",
-            link: "tel:+551199999999"
+            href: "tel:+551199999999"
         }, {
             name: "Email: mailto:contact@littlelemon.com",
-            link: "mailto:contact@littlelemon.com"
+            href: "mailto:contact@littlelemon.com"
         }]
     }, {
         th: "Social Media Links",
         td: [{
             name: "Facebook",
-            link: "https://www.facebook.com/littlelemon"
+            href: "https://www.facebook.com/littlelemon"
         }, {
             name: "Twitter",
-            link: "https://twitter.com/littlelemon"
+            href: "https://twitter.com/littlelemon"
         }, {
             name: "Instagram",
-            link: "https://www.instagram.com/littlelemon"
+            href: "https://www.instagram.com/littlelemon"
         }]
     }];
 
+    const isLargerThanLG = useBreakpointValue({ base: false, lg: true });
+
     return (
         <>
-            <HStack marginTop="2em" height="15em" justifyContent="space-between">
-                <Image src="./images/restaurant.jpg" width="30%" height="auto" />
+            <Stack marginTop="2em" height="auto" justifyContent="space-between" direction={{base:"column",xl:"row"}} width="100%">
+            {isLargerThanLG && <Image src="./images/restaurant.jpg" width="30%" height="auto" />}
                 {contact.map((i) => (
-                    <VStack height="100%" alignItems="start">
+                    <VStack height="100%" width="auto" alignItems={{base:"center",xl:"start"}}>
                         <Box textStyle="CardTitle">{i.th}</Box>
                         {i.td.map((j) => (
-                            <Link href={j.link} target="_blank">
-                                <Text whiteSpace="pre-line" textStyle="CardText">{j.name}</Text>
-                            </Link>
+                            <HashLink to={j.href}>
+                                <Text whiteSpace="pre-line" textStyle="CardText" width="100%">{j.name}</Text>
+                            </HashLink>
                         ))}
+                        <Divider colorScheme="orange" size="xl"/>
                     </VStack>
                 ))}
-            </HStack>
+            </Stack>
         </>
     );
 };
