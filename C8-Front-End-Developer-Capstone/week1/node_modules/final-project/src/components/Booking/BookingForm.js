@@ -60,7 +60,7 @@ const onSubmit = async (e) => {
     if (result) {
       console.log(result);
       alert("Data save succesfully");
-      window.location.reload(); //Add this to deal with autofill not trigger onChange problem when consecutive submissions
+       //Add this to deal with autofill not trigger onChange problem when consecutive submissions
     }
   } catch (error) {
     console.error("Error:", error);
