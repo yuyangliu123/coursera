@@ -1,18 +1,15 @@
-import React,{ useEffect, useRef }  from 'react';
+import React,{ useEffect, useRef, useState }  from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
   Box,
   Button,
-  Flex,
   Input,
   VStack,
-  Select,
-  Stack
+  Select
 } from "@chakra-ui/react";
 import theme from '../../theme';
-import { color } from 'framer-motion';
 
 //--------------------------------------------------------------------------------------------------//
 // Define Validation Rules
@@ -60,7 +57,8 @@ const onSubmit = async (e) => {
     if (result) {
       console.log(result);
       alert("Data save succesfully");
-      window.location.reload(); //Add this to deal with autofill not trigger onChange problem when consecutive submissions
+      window.location.reload()//Add this to deal with autofill not trigger onChange problem when consecutive submissions
+      console.log(isResAvailable);
     }
   } catch (error) {
     console.error("Error:", error);
@@ -101,7 +99,11 @@ const numberOfPeopleRef = useRef();
 //--------------------------------------------------------------------------------------------------//
 //After the user selects a date and time, call the checkReservation function to search for the date and time
 //at http://localhost:5000/checkReservation that matches the user’s selection.
-//If the returned value is not null (meaning it has been booked), an alert will pop up.
+//If the returned value is not null (meaning it has been booked), an alert will pop up. And order botton'll been blocked
+
+//check if reservation is available or not
+  const [isResAvailable, setResAvailable] = useState();
+
   useEffect(() => {
     if (resDate && resTime) {
       checkReservation(resDate, resTime);
@@ -111,11 +113,13 @@ const numberOfPeopleRef = useRef();
     const response = await fetch(`http://localhost:5000/checkReservation?resDate=${date}&resTime=${time}`);
     const data = await response.json();
     if (data.length>0) {
+      setResAvailable(false)
       alert("This time slot is already booked. Please choose another one.");
+    }else{
+      setResAvailable(true)
     }
   };
 //--------------------------------------------------------------------------------------------------//
-
 
 
 
@@ -171,7 +175,14 @@ const numberOfPeopleRef = useRef();
             {errors.occasion && <span>This field is required</span>}
 
 
-            <Button type="submit" size={{xl:"lg",base:"md"}} backgroundColor={isValid?"#F4CE14":"lightgrey"} disabled={!isValid}>Order!</Button>
+            <Button
+            type="submit"
+            size={{xl:"lg",base:"md"}}
+            backgroundColor={(isValid && isResAvailable)?"#F4CE14":"lightgrey"}
+            isDisabled={!(isValid && isResAvailable)}
+            >
+              Order!
+            </Button>
           </VStack>
         </form>
       </Box>
