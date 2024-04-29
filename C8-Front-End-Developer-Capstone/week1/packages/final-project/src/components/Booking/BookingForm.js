@@ -1,4 +1,4 @@
-import React,{ useEffect, useRef, useState }  from 'react';
+import React,{ useEffect, useMemo, useRef, useState }  from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -7,16 +7,17 @@ import {
   Button,
   Input,
   VStack,
-  Select
+  Select,
+  Stack,
+  Flex,
+  Heading,
+  FormControl
 } from "@chakra-ui/react";
 import theme from '../../theme';
 
 //--------------------------------------------------------------------------------------------------//
 // Define Validation Rules
 const schema = yup.object().shape({
-  fname:yup.string().required("First Name is required"),
-  email: yup.string().email('請輸入有效的電子郵件地址').required('電子郵件是必填項'),
-  password: yup.string().min(4, '密碼至少4位').required('密碼是必填項'),
   numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20,"最多20人").required('人數是必填項'),
   resTime: yup.string().required('Reservation time is required'),
   resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
@@ -45,7 +46,7 @@ const BookingForm = () => {
 //Submit form
 const onSubmit = async (e) => {
   try {
-    let result = await fetch("http://localhost:5000/register", {
+    let result = await fetch("http://localhost:5000/reservation/register", {
       method: "post",
       body: JSON.stringify({ fname, email, password, numberOfPeople, resTime, resDate, occasion }),
       headers: {
@@ -110,7 +111,7 @@ const numberOfPeopleRef = useRef();
     }
   }, [resDate, resTime]);
   const checkReservation = async (date,time) => {
-    const response = await fetch(`http://localhost:5000/checkReservation?resDate=${date}&resTime=${time}`);
+    const response = await fetch(`http://localhost:5000/reservation/checkReservation?resDate=${date}&resTime=${time}`);
     const data = await response.json();
     if (data.length>0) {
       setResAvailable(false)
@@ -120,41 +121,44 @@ const numberOfPeopleRef = useRef();
     }
   };
 //--------------------------------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------//
+//Set choose date placeholder
+  const [inputType,setInputType]=useState("text")
+  const handleFocus=()=>{setInputType("date")}
+  const handleBlur=()=>{setInputType("text")}
 
+//--------------------------------------------------------------------------------------------------//
 
 
   return (
-    <VStack bg="gray.100"  height="auto" width="100vw" padding={{base:"20vh 0", xl:"23vh 0"}}>
-      <Box margin="auto" >
-      <Box bg="white" padding={10} rounded="md" height="auto" width={{base:"30vh",xl:"50vh"}} fontSize={{base:"1.5em",lg:"2em"}}>
+    <Flex
+      flexDirection="column"
+      width="100wh"
+      height="100vh"
+      backgroundColor="gray.200"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Stack
+        direction="column"
+        marginBottom="2"
+        justifyContent="center"
+        alignItems="center"
+      >
+      <Heading color="#F4CE14">Reserve Now!</Heading>
+      <Box bg="white" padding={10} rounded="md" height="auto" minW={{ base: "90%", md: "468px" }} fontSize={{base:"1.5em",lg:"2em"}}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={4} align="flex-start">
-            <label>First Name</label>
-            <Input name="fname" ref={fnameRef} {...register('fname')} />
-            {errors.fname && <p>{errors.fname.message}</p>}
-
-
-            <label>Email</label>
-            <Input name="email" ref={emailRef} {...register('email')} />
-            {errors.email && <p>{errors.email.message}</p>}
-
-
-            <label>Password</label>
-            <Input type="password" name="password" {...register('password')} />
-            {errors.password && <p>{errors.password.message}</p>}
-
-
-            <label>Number of People</label>
-            <Input type="number" name="numberOfPeople"  ref={numberOfPeopleRef} {...register('numberOfPeople')} />
+          <FormControl>
+            <Input type="number" name="numberOfPeople"  ref={numberOfPeopleRef} {...register('numberOfPeople')} placeholder='Number of People'/>
             {errors.numberOfPeople && <p>{errors.numberOfPeople.message}</p>}
-
-
-            <label>Date</label>
-            <Input type="date" name="resDate" {...register('resDate')} />
+          </FormControl>
+          <FormControl>
+            <Input type={inputType} name="resDate" {...register('resDate')} placeholder='Choose Date'
+            onFocus={handleFocus} onBlur={handleBlur}/>
             {errors.resDate && <p>{errors.resDate.message}</p>}
-
-
-            <label htmlFor="res-time">Choose time</label>
+          </FormControl>
+          <FormControl>
             <Select id="res-time" {...register("resTime", { required: true })}>
               <option value="">--Choose Time--</option>
               <option value="17:00">17:00</option>
@@ -165,15 +169,15 @@ const numberOfPeopleRef = useRef();
               <option value="22:00">22:00</option>
             </Select>
             {errors.resTime && <span>This field is required</span>}
-
-
-            <label htmlFor="occasion">Occasion</label>
+          </FormControl>
+          <FormControl>
             <Select id="occasion" {...register("occasion", { required: true })}>
+              <option value="">--Occasion--</option>
               <option value="Birthday">Birthday</option>
               <option value="Anniversary">Anniversary</option>
             </Select>
             {errors.occasion && <span>This field is required</span>}
-
+          </FormControl>
 
             <Button
             type="submit"
@@ -186,8 +190,8 @@ const numberOfPeopleRef = useRef();
           </VStack>
         </form>
       </Box>
-      </Box>
-    </VStack>
+      </Stack>
+    </Flex>
   );
 }
 export default BookingForm

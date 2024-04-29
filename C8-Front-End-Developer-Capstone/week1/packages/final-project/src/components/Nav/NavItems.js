@@ -1,6 +1,7 @@
 import { Text } from "@chakra-ui/react";
 //A solution to the problem of React Router being unable to scroll to #hash-fragments when navigating with the <Link> component.
 import { HashLink } from "react-router-hash-link";
+import { useToken } from "../provider/JwtToken";
 const NavItem = ({ setIsOpen = () => {} }) => {
   const navElement = [
     {
@@ -28,7 +29,9 @@ const NavItem = ({ setIsOpen = () => {} }) => {
       href: "/login"
     }
   ];
-
+  const fname=useToken().fname
+  const lname=useToken().lname
+  const availableToken=useToken().availableToken
   return (
     <>
       {navElement.map((element) => {
@@ -40,7 +43,9 @@ const NavItem = ({ setIsOpen = () => {} }) => {
         <Text
         textStyle="StyledNav"
         >
-          {element.name}
+          {element.name === "LOGIN" && availableToken
+                  ? `Hi ${lname}`
+                  : element.name}
           </Text>
       </HashLink>
       )
