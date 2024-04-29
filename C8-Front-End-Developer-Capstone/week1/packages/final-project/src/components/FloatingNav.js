@@ -38,11 +38,3 @@ const FloatingNav = ({children}) => {
 
 export default FloatingNav;
 
-const Nav = {
-  position: "fixed",
-  width:"100%",
-  zIndex:"1000", //確保nav在最上層
-  transition: "top 0.3s",
-  backgroundColor:"#FFFFFF",
-  height:"auto"
-}

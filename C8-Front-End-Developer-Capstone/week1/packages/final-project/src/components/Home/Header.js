@@ -36,7 +36,7 @@ return (
     height="430px"
     width="430px"
     borderRadius="16"
-    margin="1% 0"></Image>
+    margin="3% 0"></Image>
 </>
 )
 }
