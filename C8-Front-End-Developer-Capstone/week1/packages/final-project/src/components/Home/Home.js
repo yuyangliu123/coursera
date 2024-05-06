@@ -6,6 +6,7 @@ import Main from "./Main/Main";
 import {Box, ChakraProvider} from "@chakra-ui/react"
 import theme from './../../theme';
 import CustomerCard from "./CustomerSaying/CustomerCard";
+import { TokenProvider } from "../provider/JwtToken";
 
 const Home=()=>{
     return (
@@ -23,7 +24,9 @@ const Home=()=>{
             <About/>
           </FullScreenSection>
           <FullScreenSection backgroundColor="#fbdabb4d" height="auto" padding="2vh 0">
-            <Footer/>
+            <TokenProvider>
+              <Footer/>
+            </TokenProvider>
           </FullScreenSection>
         </ChakraProvider>
       );

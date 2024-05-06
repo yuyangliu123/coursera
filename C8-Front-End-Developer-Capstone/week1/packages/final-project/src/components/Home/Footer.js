@@ -1,6 +1,7 @@
-import { VStack, Box, Image, Text,  Stack, useBreakpointValue, Divider } from "@chakra-ui/react";
+import { VStack, Box, Image, Text,  Stack, useBreakpointValue, Divider, Button } from "@chakra-ui/react";
 import theme from "../../theme";
 import { HashLink } from "react-router-hash-link";
+import { useUser } from "../provider/JwtToken";
 const Footer = () => {
     const contact = [{
         th: "Doormat Navigation",
@@ -59,7 +60,7 @@ const Footer = () => {
     }];
 
     const isLargerThanLG = useBreakpointValue({ base: false, lg: true });
-
+    const {availableToken}=useUser()
     return (
         <>
             <Stack marginTop="2em" height="auto" justifyContent="space-between" direction={{base:"column",xl:"row"}} width="100%">
@@ -67,11 +68,25 @@ const Footer = () => {
                 {contact.map((i) => (
                     <VStack height="100%" width="auto" alignItems={{base:"center",xl:"start"}}>
                         <Box textStyle="CardTitle">{i.th}</Box>
-                        {i.td.map((j) => (
+                        {i.td.map((j) => {
+                            if(availableToken && j.name==="Login"){
+                                return(
+                                <Box onClick={
+                                    ()=>{localStorage.setItem("token","")
+                                         window.location.href = "./"}
+                                }>
+                                <Text whiteSpace="pre-line" textStyle="CardText" width="100%">Log out</Text>
+
+                                </Box>
+                                )
+                            }else {
+                                return(
                             <HashLink to={j.href}>
                                 <Text whiteSpace="pre-line" textStyle="CardText" width="100%">{j.name}</Text>
                             </HashLink>
-                        ))}
+                                )
+                            }
+                        })}
                         <Divider colorScheme="orange" size="xl"/>
                     </VStack>
                 ))}

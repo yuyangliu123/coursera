@@ -15,25 +15,28 @@ import Login from './components/Register/Login';
 import Signup from './components/Register/Signup';
 import { CapslockProvider } from './components/provider/CheckCapslock';
 import { TokenProvider } from './components/provider/JwtToken';
+import LoginRotate from './components/Register/LoginRotate';
+import { TokenRotateProvider } from './components/provider/JwtTokenRotate';
 
 function App() {
 
   return (
     <ChakraProvider theme={theme} >
       
-      <FloatingNav>
         <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="2vh 0">
         <TokenProvider>
+          <TokenRotateProvider>
           <Nav/>
           <MobileNav/>
+          </TokenRotateProvider>
         </TokenProvider>
           
         </FullScreenSection>
-      </FloatingNav>
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/reservation" element={<BookingForm/>}/>
         <Route path="/login" element={<CapslockProvider><Login/></CapslockProvider>}/>
+        <Route path="/loginrotate" element={<CapslockProvider><LoginRotate/></CapslockProvider>}/>
         <Route path="/signup" element={<CapslockProvider><Signup/></CapslockProvider>}/>
       </Routes>
       
