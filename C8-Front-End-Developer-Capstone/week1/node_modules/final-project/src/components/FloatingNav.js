@@ -16,9 +16,15 @@ const FloatingNav = ({children}) => {
     const handleScroll = () => {
       let st = window.pageYOffset || document.documentElement.scrollTop;
       if (st > lastScrollTop) {
-        setNavBarTop('-100px');  // 向下滚动时隐藏
+        // 向下滚动时隐藏
+        if (navBarTop !== '-100px') {
+          setNavBarTop('-100px');
+        }
       } else {
-        setNavBarTop('0');  // 向上滚动时显示
+        // 向上滚动时显示
+        if (navBarTop !== '0') {
+          setNavBarTop('0');
+        }
       }
       setLastScrollTop(st <= 0 ? 0 : st);
     };

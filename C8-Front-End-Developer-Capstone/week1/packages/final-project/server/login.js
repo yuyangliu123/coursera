@@ -57,7 +57,8 @@ const login = express();
 const cors = require("cors");
 const bcrypt =require("bcrypt")
 const jwt=require("jsonwebtoken")
-const SECRET_KEY = 'aaaaaaaa';
+const uuid=require("uuid")
+const SECRET_KEY = 'bbbbbbbb';
 const { string } = require('yup');
 console.log("App listen at port 5000");
 login.use(express.json());
@@ -72,11 +73,13 @@ login.get("/", (req, resp) => {
 });
 //--------------------------------------------------------------------------------------------------//
 
-const createJwtToken = (fname,lname,email,expiresIn) => {
+const createJwtToken = (fname,lname,email,expiresIn,refreshTime) => {
     const payload = {
 		fname:fname,
 		lname:lname,
-        email: email
+        email: email,
+		refreshTime:refreshTime,
+		jti:uuid.v4()
     };
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: expiresIn });
     return token;
@@ -94,11 +97,11 @@ login.post("/login", async (req, resp) => {
             if (validPassword) {
                 if (req.body.rememberMe === true) {
                     // Create a JWT token with a longer expiration (30 days)
-                    const token = createJwtToken(user.fname, user.lname, req.body.email, "30d");
+                    const token = createJwtToken(user.fname, user.lname, req.body.email, "30d",1);
                     return resp.status(200).send({ state: true, name: user.fname, message: "remember", token });
                 } else {
                     // Create a JWT token with a shorter expiration (1 mins)
-                    const token = createJwtToken(user.fname, user.lname, req.body.email, "1m");
+                    const token = createJwtToken(user.fname, user.lname, req.body.email, "1m",1);
                     return resp.status(200).send({ state: false, name: user.fname, message: "not remember", token });
                 }
             } else {
@@ -123,12 +126,13 @@ login.post("/login", async (req, resp) => {
 			// Validate user data (e.g., check if email exists)
 			// ...
 			// Assuming user data is valid, create a new token
-			const token = createJwtToken(req.body.fname, req.body.lname, req.body.email, '1m');
+			const token = createJwtToken(req.body.fname, req.body.lname, req.body.email, '1m',Number(req.body.refreshTime)+1);
 			resp.status(200).json({ token });
 		} catch (error) {
 			resp.status(400).json({ error: 'Something went wrong' });
 		}
 	})
 //--------------------------------------------------------------------------------------------------//
+
 
 module.exports = login;

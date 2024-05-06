@@ -1,28 +1,35 @@
 import { createContext, useContext, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 const TokenContext = createContext();
-
 export const useToken = () => {
   return useContext(TokenContext);
+};
+
+const UserContext = createContext();
+export const useUser = () => {
+  return useContext(UserContext);
 };
 
 export const TokenProvider = ({ children }) => {
 
   const checkTokenState = () => {
     // Simulate API call to check token
-    const jwtToken = localStorage.getItem("token");
+  const jwtToken = localStorage.getItem("token");
+  //if token exist, then checke it's condition and decide should refresh it or delete it
+  if(jwtToken){
     const decodedToken = jwtToken ? jwtDecode(jwtToken) : null;
     const currentTime = Date.now() / 1000;
     const refreshDay = 7 * 60 * 60 * 24;
     const availableToken = decodedToken?.exp > currentTime;
     const refreshToken = decodedToken?.exp + refreshDay > currentTime;
-
-    const createNewToken = async (fname, lname, email) => {
+    const nOfRelogin=5
+    const relogin=Number(decodedToken.refreshTime)>nOfRelogin
+    const createNewToken = async (fname, lname, email,refreshTime) => {
       try {
         // Make an API call to create a new token
         const result = await fetch("http://localhost:5000/login/create-token", {
           method: "POST",
-          body: JSON.stringify({ fname, lname, email }),
+          body: JSON.stringify({ fname, lname, email,refreshTime }),
           headers: {
             "Content-Type": "application/json",
           },
@@ -38,25 +45,33 @@ export const TokenProvider = ({ children }) => {
         console.error("Error:", error);
       }
     };
+  //---------------------------------------------------------------------------//
+  //If the token exists, fname and other variables will be defined;
+  //otherwise (if not logged in or if the token has expired), fname will not be defined.
 
-    switch (true) {
-      case availableToken:
-        return {
-          availableToken,
-          jwtToken,
-          fname: decodedToken.fname,
-          lname: decodedToken.lname,
-          email: decodedToken.email,
-        };
-      case refreshToken:
-        createNewToken(decodedToken.fname, decodedToken.lname, decodedToken.email);
-        break;
-      default:
-        localStorage.setItem("token", "");
-        break;
+    if (relogin) {
+      localStorage.setItem("token", "");
+    }else if (availableToken) {
+      const user = {
+        availableToken:availableToken,
+        jwtToken:jwtToken,
+        fname: decodedToken.fname,
+        lname: decodedToken.lname,
+        email: decodedToken.email,
+        refreshTime:decodedToken.refreshTime
+      };
+      return user; //export user object
+    } else if (refreshToken) {
+      createNewToken(decodedToken.fname, decodedToken.lname, decodedToken.email,decodedToken.refreshTime);
+    } else {
+      localStorage.setItem("token", "");
     }
-  };
-
+  }
+  //when jwtToken is null, return null object
+  return {}
+};
+//---------------------------------------------------------------------------//
+const user = checkTokenState();
   useEffect(() => {
     window.addEventListener("DOMContentLoaded", checkTokenState);
     return () => {
@@ -64,5 +79,11 @@ export const TokenProvider = ({ children }) => {
     };
   }, []);
 
-  return <TokenContext.Provider value={checkTokenState()}>{children}</TokenContext.Provider>;
+  return (
+    <TokenContext.Provider value={checkTokenState()}>
+      <UserContext.Provider value={user}>
+        {children}
+      </UserContext.Provider>
+    </TokenContext.Provider>
+  );
 };
