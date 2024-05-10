@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Image, List, ListItem, VStack ,Text} from "@chakra-ui/react";
+import { Box, Button, HStack, Image, List, ListItem, VStack ,Text, useToast} from "@chakra-ui/react";
 import theme from "../../theme.js";
 import { HashLink } from "react-router-hash-link";
 import { jwtDecode } from "jwt-decode";
@@ -35,6 +35,7 @@ const Nav = () => {
 const {lname,email,availableAccessToken}=useUserRotate()
 const [showLogout,setShowLogout]=useState(false)
 const refreshToken= localStorage.getItem("refreshToken");
+const toast = useToast()
 const onLogout = async (e) => {
   if(refreshToken){
       try {
@@ -49,8 +50,14 @@ const onLogout = async (e) => {
             localStorage.removeItem("refreshToken")
             localStorage.removeItem("accessToken")
             console.log(result);
-            alert(`log Up Successfully`);
-            window.location.href = "./";//After singup success, relocate to login page
+            toast({
+              title:"Log Up Successfully",
+              status:"success",
+              duration:2000,
+            })
+            setTimeout(() => {
+              window.location.href = "./";//After singup success, relocate to login page
+            }, 2000);
           }else if (result.status === 400) {
             console.log(await result.text());
           } else {
@@ -64,7 +71,7 @@ const onLogout = async (e) => {
 };
 
 
-const logoutRef = useRef(); // 建立一個 ref
+const logoutRef = useRef(); // create ref
 
 useEffect(() => {
   const handleClickOutside = (event) => {
@@ -73,10 +80,10 @@ useEffect(() => {
     }
   }
 
-  // 在 component mount 時添加事件監聽器
+  // add event listener when component mount
   document.addEventListener("mousedown", handleClickOutside);
   return () => {
-    // 在 component unmount 時移除事件監聽器
+  // remove event listener when component mount
     document.removeEventListener("mousedown", handleClickOutside);
   };
 }, []);

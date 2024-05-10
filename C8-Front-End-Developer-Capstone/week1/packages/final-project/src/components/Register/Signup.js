@@ -20,7 +20,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useCapslock } from "../provider/CheckCapslock"; 
+import { useCapslock } from "../provider/CheckCapslock";
 //--------------------------------------------------------------------------------------------------//
 // Define Validation Rules
 const schema = yup.object().shape({
@@ -74,7 +74,7 @@ const onSubmit = async (e) => {
         console.log(result);
         alert(`Sign Up Successfully`);
         reset();
-        window.location.href = "./login";//After singup success, relocate to login page
+        window.location.href = "./loginrotate";//After singup success, relocate to login page
       }
     }
   } catch (error) {
@@ -169,7 +169,7 @@ const onSubmit = async (e) => {
       </Stack>
       <Box>
         Already have an account? {" "}
-        <Link color="teal.500" href="/login">
+        <Link color="teal.500" href="/loginrotate">
           Login
         </Link>
       </Box>

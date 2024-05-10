@@ -73,7 +73,8 @@ const cors = require("cors");
 const bcrypt =require("bcrypt")
 const jwt=require("jsonwebtoken")
 const uuid=require("uuid")
-const SECRET_KEY = 'aaaaaaaa';
+require("dotenv").config()
+const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
 console.log("App listen at port 5000");
 login2.use(express.json());
