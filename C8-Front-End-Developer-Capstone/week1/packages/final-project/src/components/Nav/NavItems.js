@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Image, List, ListItem, VStack ,Text} from "@chakra-ui/react";
+import { Box, Button, HStack, Image, List, ListItem, VStack ,Text, useToast} from "@chakra-ui/react";
 //A solution to the problem of React Router being unable to scroll to #hash-fragments when navigating with the <Link> component.
 import { HashLink } from "react-router-hash-link";
 import { useToken } from "../provider/JwtToken";
@@ -36,6 +36,7 @@ const NavItem = ({ setIsOpen}) => {
   //If the token exists, fname and other variables will be defined;
   //otherwise (if not logged in or if the token has expired), fname will not be defined.
   const {lname,email,availableAccessToken}=useUserRotate()
+  const toast=useToast()
   const refreshToken= localStorage.getItem("refreshToken");
   const onLogout = async (e) => {
     if(refreshToken){
@@ -51,8 +52,14 @@ const NavItem = ({ setIsOpen}) => {
               localStorage.removeItem("refreshToken")
               localStorage.removeItem("accessToken")
               console.log(result);
-              alert(`log Up Successfully`);
+            toast({
+              title:"Log Up Successfully",
+              status:"success",
+              duration:2000,
+            })
+            setTimeout(() => {
               window.location.href = "./";//After singup success, relocate to login page
+            }, 2000);
             }else if (result.status === 400) {
               console.log(await result.text());
             } else {

@@ -64,11 +64,6 @@ RefreshToken.createIndexes();
 const express = require('express');
 const logout = express();
 const cors = require("cors");
-const bcrypt =require("bcrypt")
-const jwt=require("jsonwebtoken")
-const uuid=require("uuid")
-const SECRET_KEY = 'aaaaaaaa';
-const { string } = require('yup');
 console.log("App listen at port 5000");
 logout.use(express.json());
 logout.use(cors());

@@ -17,29 +17,33 @@ import { CapslockProvider } from './components/provider/CheckCapslock';
 import { TokenProvider } from './components/provider/JwtToken';
 import LoginRotate from './components/Register/LoginRotate';
 import { TokenRotateProvider } from './components/provider/JwtTokenRotate';
+import FixNav from './components/FixNav';
+import ForgotPassword from './components/Register/ForgotPassword';
+import ResetPassword from './components/Register/ResetPassword';
 
 function App() {
 
   return (
     <ChakraProvider theme={theme} >
-      
+      <FixNav>
         <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="2vh 0">
         <TokenProvider>
           <TokenRotateProvider>
-          <Nav/>
-          <MobileNav/>
+            <Nav/>
+            <MobileNav/>
           </TokenRotateProvider>
         </TokenProvider>
-          
         </FullScreenSection>
+        </FixNav>
       <Routes>
         <Route path="/" element={<Home/>}/>
-        <Route path="/reservation" element={<BookingForm/>}/>
+        <Route path="/reservation" element={<CapslockProvider><TokenRotateProvider><BookingForm/></TokenRotateProvider></CapslockProvider>}/>
         <Route path="/login" element={<CapslockProvider><Login/></CapslockProvider>}/>
         <Route path="/loginrotate" element={<CapslockProvider><LoginRotate/></CapslockProvider>}/>
         <Route path="/signup" element={<CapslockProvider><Signup/></CapslockProvider>}/>
+        <Route path="/forgotpassword" element={<CapslockProvider><ForgotPassword/></CapslockProvider>}/>
+        <Route path="/resetpassword" element={<CapslockProvider><ResetPassword/></CapslockProvider>}/>
       </Routes>
-      
     </ChakraProvider>
   );
 }

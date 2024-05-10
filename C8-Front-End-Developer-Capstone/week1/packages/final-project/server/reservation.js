@@ -15,6 +15,14 @@ mongoose.connect('mongodb://localhost:27017/', {
 //--------------------------------------------------------------------------------------------------//
 // Schema for users of app
 const UserSchema = new mongoose.Schema({
+	fname: {
+		type: String,
+		required: true,
+	},
+	email: {
+		type: String,
+		required: true,
+	},
     numberOfPeople: {
 		type: String,
 		required: true,
@@ -61,7 +69,7 @@ app.get("/", (req, resp) => {
 
 //--------------------------------------------------------------------------------------------------//
 // This route handler processes user registration requests for the '/register' path.
-app.post("/register", async (req, resp) => {
+app.post("/reservation", async (req, resp) => {
 	try {
 	  // Create a new user instance with the data from the request body.
 	  const user = new User(req.body);

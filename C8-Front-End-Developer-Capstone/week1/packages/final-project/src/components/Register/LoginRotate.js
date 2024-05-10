@@ -14,7 +14,8 @@ import {
   FormControl,
   FormHelperText,
   InputRightElement,
-  Checkbox
+  Checkbox,
+  useToast
 } from "@chakra-ui/react";
 import {Route} from 'react-router-dom';
 
@@ -41,6 +42,7 @@ const LoginRotate = () => {
     resolver: yupResolver(schema)
   });
   const handleShowClick = () => setShowPassword(!showPassword);
+  const toast = useToast()
 //--------------------------------------------------------------------------------------------------//
 //Submit form
 const onSubmit = async (data) => {
@@ -60,11 +62,25 @@ const onSubmit = async (data) => {
       const response=await result.json();
       localStorage.setItem("accessToken",response.accessToken)
       localStorage.setItem("refreshToken",response.refreshToken)
-      alert("Login successful");
+      toast({
+        title: "Login Success",
+        description: "You will soon be redirected",
+        status: "success",
+        duration: 2000,
+      });
       console.log(response.refreshToken);
-      window.location.href="./" //After singup success, relocate to login page
+      setTimeout(()=>{
+        window.location.href="./" //After singup success, relocate to login page
+      },2000)
+
     } else if (result.status === 400) {
       setServerError(await result.text()); // Set the server error message
+      toast({
+        title: "Login Failed",
+        description: "Something Went Wrong",
+        status: "error",
+        duration: 2000,
+      });
     }
   } catch (error) {
     console.error("Error:", error);
@@ -121,7 +137,7 @@ const onSubmit = async (data) => {
                 {capslockState ? <p>Caps Lock is active!</p> : null}
                 <Stack direction="row" width="100%" justifyContent="end">
                   <FormHelperText>
-                    <Link>forgot password?</Link>
+                    <Link href="/forgotpassword">forgot password?</Link>
                   </FormHelperText>
                 </Stack>
 
