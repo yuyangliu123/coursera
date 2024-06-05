@@ -2,9 +2,11 @@ import { Box, Button, HStack, Image, List, ListItem, VStack ,Text, useToast} fro
 import theme from "../../theme.js";
 import { HashLink } from "react-router-hash-link";
 import { jwtDecode } from "jwt-decode";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useUser } from "../provider/JwtToken.js";
 import { useUserRotate } from "../provider/JwtTokenRotate.js";
+import {MealContext} from "../provider/MealContext"
+import MiniCart from "../OrderOnline/MiniCart.js";
 const Nav = () => {
   const navElement = [
     {
@@ -28,14 +30,21 @@ const Nav = () => {
       href: "/order",
     },
     {
+      name: "Cart",
+      href: "",
+    },
+    {
       name: "LOGIN",
       href: "/login",
     },
   ];
 const {lname,email,availableAccessToken}=useUserRotate()
 const [showLogout,setShowLogout]=useState(false)
+const [showMiniCart,setShowMiniCart]=useState(false)
 const refreshToken= localStorage.getItem("refreshToken");
 const toast = useToast()
+const { cartItem,setCartItem } = useContext(MealContext);
+const [cart,setCart]=useState({})
 const onLogout = async (e) => {
   if(refreshToken){
       try {
@@ -51,7 +60,7 @@ const onLogout = async (e) => {
             localStorage.removeItem("accessToken")
             console.log(result);
             toast({
-              title:"Log Up Successfully",
+              title:"Logged Out Successfully",
               status:"success",
               duration:2000,
             })
@@ -71,12 +80,15 @@ const onLogout = async (e) => {
 };
 
 
-const logoutRef = useRef(); // create ref
-
+const logoutRef = useRef(); // create logout ref
+const minicartRef=useRef()
 useEffect(() => {
   const handleClickOutside = (event) => {
     if (logoutRef.current && !logoutRef.current.contains(event.target)) {
       setShowLogout(false); // click outside of ref, set ShowLogout as false
+    }
+    if (minicartRef.current && !minicartRef.current.contains(event.target)) {
+      setShowMiniCart(false); // click outside of ref, set ShowLogout as false
     }
   }
 
@@ -87,66 +99,132 @@ useEffect(() => {
     document.removeEventListener("mousedown", handleClickOutside);
   };
 }, []);
+
+
+useEffect(()=>{
+  (async()=>{
+      if(email && email!==""){
+          try{
+              await fetch(`http://localhost:5000/api/carts`, {
+                  method: "post",
+                  body: JSON.stringify({
+                      email:email?email:"",
+                  }),
+                  headers: {
+                    "Content-Type": "application/json"
+                  }
+                })
+              .then(response=>response.json())
+              .then(data=>{
+                  const totalNum=data.shoppingcart.data.reduce((total, item) => total + item.numMeal, 0)
+                  setCartItem(totalNum)
+                  setCart(prevCart => ({...prevCart, ...data}))
+              })
+          }catch(err){
+              console.log(err);
+          }
+      }
+  })()
+},[email,cartItem])
+
+
   //---------------------------------------------------------------------------//
   // Now we can use fname and lname in the return statement
   return (
     <Box width="100%" display={{ base: "none", lg: "block" }}>
       <HStack justifyContent="space-between">
         <HashLink to="/#top">
-          <Image src="./images/Logo.svg" />
+          <Image src="/images/Logo.svg" />
         </HashLink>
         {navElement.map((element) => {
           if (element.name === "LOGIN" && availableAccessToken) {
             return (
-              <>
-              <Box height="auto" position="relative"  ref={logoutRef}>
-                <Text textStyle="StyledNav"
-                      onClick={() => setShowLogout(!showLogout)}
-                >
-                  Hi {lname}
-                </Text>
-                <Box
-                display={showLogout?"block":"none"}
-                position="absolute"
-                backgroundColor="#f1f1f1"
-                right="0" minWidth="100px"
-                height="auto"
-                onClick={() => setShowLogout(!showLogout)}
-                >
-                  <List>
-                    <ListItem
-                    onClick={()=>{
-                      onLogout()
-                      }}>
-                      Log Out
-                    </ListItem>
-                  </List>
+                <Box height="auto" position="relative"  ref={logoutRef}>
+                  <Text textStyle="StyledNav"
+                        onClick={() => setShowLogout(!showLogout)}
+                  >
+                    Hi {lname}
+                  </Text>
+                  <Box
+                  display={showLogout?"block":"none"}
+                  position="absolute"
+                  backgroundColor="#fff"
+                  right="0"
+                  minWidth="150px"
+                  height="auto"
+                  border="1px solid #ccc"
+                  onClick={() => setShowLogout(!showLogout)}
+                  >
+                    <List>
+                      <ListItem
+                      onClick={()=>{
+                        onLogout()
+                        }}>
+                          <Box  textStyle="StyledNav" marginLeft="1rem">
+                            Log Out
+                          </Box>
+                      </ListItem>
+                    </List>
+                  </Box>
                 </Box>
-                </Box>
-              </>
             );
-          } else if(element.name === "LOGIN") {
-            return (
+          }else if(element.name === "Cart"){
+            return(
               <>
-              <Box height="auto" position="relative"  ref={logoutRef}>
-                <Text textStyle="StyledNav"
-                      onClick={() => setShowLogout(!showLogout)}
-                >
-                  LOGIN
-                </Text>
+              {(Object.keys(cart).length==0) &&
+              <Box>
+              <Image src="/images/Basket.svg"/>
+              </Box>
+              }
+              {(Object.keys(cart).length>0) &&
+              <Box
+              position="relative"
+              onClick={()=>setShowMiniCart(!showMiniCart)}
+              ref={minicartRef}
+              >
                 <Box
-                display={showLogout?"block":"none"}
                 position="absolute"
-                backgroundColor="#f1f1f1"
-                right="0" minWidth="100px"
-                height="auto"
-                onClick={() => setShowLogout(!showLogout)}
-                >
-                  <HashLink to="/login"><Box>Log In</Box></HashLink>
-                  <HashLink to="loginrotate"><Box>Log Rotate</Box></HashLink>
+                display="inline-flex"
+                right="-0.5rem"
+                top="0.3rem"
+                zIndex="100"
+                backgroundColor="red"
+                color="white"
+                borderRadius="50%"
+                height="1rem"
+                width="1rem"
+                alignItems="center"
+                justifyContent="center">{cartItem}</Box>
+                <Box>
+                <Image src="/images/Basket.svg"/>
                 </Box>
-                </Box>
+                <MiniCart cart={cart} showMiniCart={showMiniCart} setShowMiniCart={setShowMiniCart}/>
+              </Box>
+              }
               </>
+
+            )
+          }
+          else if(element.name === "LOGIN") {
+            return (
+                <Box height="auto" position="relative"  ref={logoutRef}>
+                  <Text textStyle="StyledNav"
+                        onClick={() => setShowLogout(!showLogout)}
+                  >
+                    LOGIN
+                  </Text>
+                  <Box
+                  display={showLogout?"block":"none"}
+                  position="absolute"
+                  backgroundColor="#f1f1f1"
+                  right="0" minWidth="100px"
+                  height="auto"
+                  onClick={() => setShowLogout(!showLogout)}
+                  >
+                    <HashLink to="/login"><Box>Log In</Box></HashLink>
+                    <HashLink to="loginrotate"><Box>Log Rotate</Box></HashLink>
+                  </Box>
+                </Box>
             );
           }else {
             return (
@@ -161,6 +239,6 @@ useEffect(() => {
       </HStack>
     </Box>
   );
+  
 };
-
 export default Nav;

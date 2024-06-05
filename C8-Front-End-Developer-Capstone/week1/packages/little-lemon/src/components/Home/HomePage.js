@@ -6,8 +6,9 @@ import Main from "./Main/Main";
 import {Box, ChakraProvider} from "@chakra-ui/react"
 import theme from './../../theme';
 import CustomerCard from "./CustomerSaying/CustomerCard";
+import { TokenProvider } from "../provider/JwtToken";
 
-const Home=()=>{
+const HomePage=()=>{
     return (
         <ChakraProvider theme={theme} >
           <Box id="top">
@@ -22,8 +23,13 @@ const Home=()=>{
           <FullScreenSection backgroundColor="#EE9972" height="auto" padding={{base:"2vh 0 2vh 0",xxl:"2vh 0 20vh 0"}}>
             <About/>
           </FullScreenSection>
+          <FullScreenSection backgroundColor="#fbdabb4d" height="auto" padding="2vh 0">
+            <TokenProvider>
+              <Footer/>
+            </TokenProvider>
+          </FullScreenSection>
         </ChakraProvider>
       );
 }
 
-export default Home
+export default HomePage

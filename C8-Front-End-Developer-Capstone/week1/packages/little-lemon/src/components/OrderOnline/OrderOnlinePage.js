@@ -2,13 +2,11 @@ import { VStack,
   Box,
   WrapItem,
   Button,Stack} from "@chakra-ui/react"
-import theme from "../../../theme.js"
-import Card from "./Card.js"
+import theme from "../../theme.js"
 import { faMartiniGlassEmpty } from "@fortawesome/free-solid-svg-icons"
-import { HashLink } from "react-router-hash-link"
-import OrderOnline from "../../OrderOnline/OrderOnline.js"
+import OrderOnline from "./OrderOnline.js"
 
-const Main = () => {
+const OrderOnlinePage = () => {
 return (
 <>
   <VStack w="100%" align="start" padding="100px 0" id="menu">
@@ -17,15 +15,13 @@ return (
         This Weeks specials!
       </Box>
       <WrapItem>
-        <Button sx={theme.textStyles.StyledButton.baseStyle} size="lg"><HashLink to="/order2">Online Menu</HashLink></Button>
+        <Button sx={theme.textStyles.StyledButton.baseStyle} size="lg">Online Menu</Button>
       </WrapItem>
     </Stack>
-    <Stack height="auto" justifyContent="space-between"  direction={{lg:"row",base:"column"}}>
-      <Card/>
-    </Stack>
+      <OrderOnline/>
   </VStack>
 </>
 )
 }
 
-export default Main
+export default OrderOnlinePage

@@ -25,7 +25,7 @@ const NavItem = ({ setIsOpen}) => {
     },
     {
       name: "ORDER ONLINE",
-      href: "/order"
+      href: "/order2"
     },
     {
       name: "LOGIN",

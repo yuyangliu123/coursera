@@ -34,7 +34,7 @@ const MobileNav = () => {
         <HStack
         justifyContent="space-between"
         >
-          <HashLink to="/#top"><Image src="./images/Logo.svg" /></HashLink>
+          <HashLink to="/#top"><Image src="/images/Logo.svg" /></HashLink>
           <button onClick={() => setIsOpen(!isOpen)}><HamburgerIcon/></button>
         </HStack>
         <VStack
