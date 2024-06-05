@@ -54,7 +54,7 @@ useEffect(() => {
     // Simulate API call to check token
     const accessToken = localStorage.getItem("accessToken");
     const refreshToken= localStorage.getItem("refreshToken");
-    if(accessToken && refreshToken){
+    if(accessToken || refreshToken){
     const decodedAccessToken = accessToken ? jwtDecode(accessToken) : null;
     const decodedRefreshToken = refreshToken ? jwtDecode(refreshToken) : null;
     const currentTime = Date.now() / 1000;

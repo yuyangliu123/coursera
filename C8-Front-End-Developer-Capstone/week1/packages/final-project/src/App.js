@@ -17,33 +17,73 @@ import { CapslockProvider } from './components/provider/CheckCapslock';
 import { TokenProvider } from './components/provider/JwtToken';
 import LoginRotate from './components/Register/LoginRotate';
 import { TokenRotateProvider } from './components/provider/JwtTokenRotate';
+import { MealContextProvider } from './components/provider/MealContext';
 import FixNav from './components/FixNav';
 import ForgotPassword from './components/Register/ForgotPassword';
 import ResetPassword from './components/Register/ResetPassword';
+import OrderOnlinePage from './components/OrderOnline/OrderOnlinePage';
+import FoodPage from './components/OrderOnline/FoodPage';
 
+
+import {ApolloClient, InMemoryCache,  ApolloProvider } from '@apollo/client';
+import Hello from './Hello';
+import Nav2 from './components/Nav/Nav2';
+import FoodPage2 from './components/OrderOnline/FoodPage2';
+import OrderOnlinePage2 from './components/OrderOnline/OrderOnlinePage2';
+import Footer from './components/Home/Footer';
+import CartPage from './components/OrderOnline/CartPage';
+
+const client = new ApolloClient({
+  uri: 'http://localhost:5000/graphql',
+  cache: new InMemoryCache()
+});
 function App() {
-
   return (
-    <ChakraProvider theme={theme} >
-      <FixNav>
-        <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="2vh 0">
-        <TokenProvider>
-          <TokenRotateProvider>
-            <Nav/>
-            <MobileNav/>
-          </TokenRotateProvider>
-        </TokenProvider>
-        </FullScreenSection>
-        </FixNav>
-      <Routes>
-        <Route path="/" element={<Home/>}/>
-        <Route path="/reservation" element={<CapslockProvider><TokenRotateProvider><BookingForm/></TokenRotateProvider></CapslockProvider>}/>
-        <Route path="/login" element={<CapslockProvider><Login/></CapslockProvider>}/>
-        <Route path="/loginrotate" element={<CapslockProvider><LoginRotate/></CapslockProvider>}/>
-        <Route path="/signup" element={<CapslockProvider><Signup/></CapslockProvider>}/>
-        <Route path="/forgotpassword" element={<CapslockProvider><ForgotPassword/></CapslockProvider>}/>
-        <Route path="/resetpassword" element={<CapslockProvider><ResetPassword/></CapslockProvider>}/>
-      </Routes>
+    <ChakraProvider theme={theme}>
+      <TokenRotateProvider>
+        <MealContextProvider>
+          <ApolloProvider client={client}>
+            <FixNav>
+              <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="2vh 0">
+                <Nav2 />
+                <MobileNav />
+              </FullScreenSection>
+            </FixNav>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/reservation" element={<CapslockProvider><BookingForm /></CapslockProvider>} />
+              <Route path="/order/:strMeal" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="3vh 0">
+                  <FoodPage />
+                </FullScreenSection>}
+              />
+              <Route path="/order2" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="3vh 0">
+                  <OrderOnlinePage2 />
+                </FullScreenSection>}
+              />
+              <Route path="/order2/:strMeal" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="3vh 0">
+                  <FoodPage2 />
+                </FullScreenSection>}
+              />
+              <Route path="/cart" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" minHeight="67vh" padding="10vh 0">
+                  <CartPage/>
+                </FullScreenSection>}
+              />
+              <Route path="/login" element={<CapslockProvider><Login /></CapslockProvider>} />
+              <Route path="/loginrotate" element={<CapslockProvider><LoginRotate /></CapslockProvider>} />
+              <Route path="/signup" element={<CapslockProvider><Signup /></CapslockProvider>} />
+              <Route path="/forgotpassword" element={<CapslockProvider><ForgotPassword /></CapslockProvider>} />
+              <Route path="/resetpassword" element={<CapslockProvider><ResetPassword /></CapslockProvider>} />
+            </Routes>
+            <FullScreenSection backgroundColor="#fbdabb4d" height="auto" padding="2vh 0">
+              <Footer />
+            </FullScreenSection>
+          </ApolloProvider>
+        </MealContextProvider>
+      </TokenRotateProvider>
     </ChakraProvider>
   );
 }

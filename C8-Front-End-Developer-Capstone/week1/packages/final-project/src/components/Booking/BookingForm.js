@@ -1,4 +1,4 @@
-import React,{ useEffect, useMemo, useRef, useState }  from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -18,30 +18,33 @@ import theme from '../../theme';
 import { useUserRotate } from '../provider/JwtTokenRotate';
 import { useCapslock } from '../provider/CheckCapslock';
 
-//--------------------------------------------------------------------------------------------------//
-// Define Validation Rules
-const schema = yup.object().shape(localStorage.getItem("accessToken")?
-  {
-  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20,"最多20人").required('人數是必填項'),
-  resTime: yup.string().required('Reservation time is required'),
-  resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
-  occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),}
-  :{
-  fname:yup.string().required("First name is required"),
-  email: yup.string().email('請輸入有效的電子郵件地址').required('電子郵件是必填項'),
-  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20,"最多20人").required('人數是必填項'),
+
+
+
+const BookingForm = () => {
+  // Define Validation Rules
+const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToken") ? {
+  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
   resTime: yup.string().required('Reservation time is required'),
   resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
   occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
-});
-//--------------------------------------------------------------------------------------------------//
-const BookingForm = () => {
+} : {
+  fname: yup.string().required("First name is required"),
+  email: yup.string().email('請輸入有效的電子郵件地址').required('電子郵件是必填項'),
+  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
+  resTime: yup.string().required('Reservation time is required'),
+  resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
+  occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
+}), []);
+
   const { register, handleSubmit, watch, formState: { errors, isValid }, reset } = useForm({
     mode: 'onChange', // Real-time validation
     resolver: yupResolver(schema)
   });
 
-//--------------------------------------------------------------------------------------------------//
+  const { fname, email, availableAccessToken } = useUserRotate();
+  const toast = useToast();
+
   // Monitor the Changes in Form Values
   const userFname = watch('fname');
   const userEmail = watch('email');
@@ -49,110 +52,91 @@ const BookingForm = () => {
   const resTime = watch('resTime');
   const resDate = watch('resDate');
   const occasion = watch('occasion');
-//--------------------------------------------------------------------------------------------------//
-const {fname,email,availableAccessToken}=useUserRotate()
-const toast=useToast()
-//--------------------------------------------------------------------------------------------------//
-//Submit form
-const onSubmit = async (e) => {
-  try {
-    let result = await fetch("http://localhost:5000/reservation/reservation", {
-      method: "post",
-      body: JSON.stringify(await availableAccessToken?
-         {fname,email, numberOfPeople, resTime, resDate, occasion }
-        :{ fname:userFname, email:userEmail, numberOfPeople, resTime, resDate, occasion }
-        ),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-    result = await result.json();
-    console.warn(result);
-    if (result) {
-      console.log(result);
-      toast({
-        title:"Reserve Successfully",
-        status:"success",
-        duration:2000,
-      })
-      setTimeout(() => {
-        window.location.href = "./";//After singup success, relocate to login page
-      }, 2000);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
 
-//--------------------------------------------------------------------------------------------------//
-  //Add detect if capslock on or off
+  // Submit form
+  const onSubmit = useCallback(async (data) => {
+    try {
+      const result = await fetch("http://localhost:5000/reservation/reservation", {
+        method: "post",
+        body: JSON.stringify(availableAccessToken ? { fname, email, numberOfPeople, resTime, resDate, occasion }
+          : { fname: userFname, email: userEmail, numberOfPeople, resTime, resDate, occasion }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const resultJson = await result.json();
+      console.warn(resultJson);
+      if (resultJson) {
+        console.log(resultJson);
+        toast({
+          title: "Reserve Successfully",
+          status: "success",
+          duration: 2000,
+        })
+        setTimeout(() => {
+          window.location.href = "./"; // After signup success, relocate to login page
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }, [availableAccessToken, fname, email, numberOfPeople, resTime, resDate, occasion, userFname, userEmail, toast]);
+
+  // Add detect if capslock on or off
   const capslockState = useCapslock();
 
-//--------------------------------------------------------------------------------------------------//
-//use useEffect & useRef to deal with autofill not trigger onChange problem
-//Because the autofill problem continues to occur with consecutive submissions,
-//I added a window.location.reload() in onSubmit to refresh the entire webpage.
-const fnameRef = useRef();
-const emailRef = useRef();
-const numberOfPeopleRef = useRef();
+  // use useEffect & useRef to deal with autofill not trigger onChange problem
+  const fnameRef = useRef();
+  const emailRef = useRef();
+  const numberOfPeopleRef = useRef();
+
   useEffect(() => {
     // Set a timer to check if the input value has been autofilled.
     const timer = setTimeout(() => {
       if (fnameRef.current && fnameRef.current.value !== userFname) {
-        fnameRef.current = userFname;
+        fnameRef.current.value = userFname;
       }
       if (emailRef.current && emailRef.current.value !== userEmail) {
-        emailRef.current = userEmail;
+        emailRef.current.value = userEmail;
       }
       if (numberOfPeopleRef.current && numberOfPeopleRef.current.value !== numberOfPeople) {
-        numberOfPeopleRef.current = numberOfPeople;
+        numberOfPeopleRef.current.value = numberOfPeople;
       }
-    }, 100); // check every 50ms
+    }, 100);
 
     // Cleanup function will run when the component unmounts or when the dependencies of useEffect change.
     return () => clearTimeout(timer);
-  }, [userFname, userEmail,numberOfPeople]); // depand on userFname, userEmail, numberOfPeople
-//--------------------------------------------------------------------------------------------------//
+  }, [userFname, userEmail, numberOfPeople]);
 
-
-
-//--------------------------------------------------------------------------------------------------//
-//After the user selects a date and time, call the checkReservation function to search for the date and time
-//at http://localhost:5000/checkReservation that matches the user’s selection.
-//If the returned value is not null (meaning it has been booked), an alert will pop up. And order botton'll been blocked
-
-//check if reservation is available or not
+  // Check if reservation is available or not
   const [isResAvailable, setResAvailable] = useState();
+
+  const checkReservation = useCallback(async (date, time) => {
+    const response = await fetch(`http://localhost:5000/reservation/checkReservation?resDate=${date}&resTime=${time}`);
+    const data = await response.json();
+    if (data.length > 0) {
+      setResAvailable(false)
+      toast({
+        title: "Opps!",
+        description: "This time slot is already booked. Please choose another one.",
+        status: "error",
+        duration: 3000,
+      })
+    } else {
+      setResAvailable(true)
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (resDate && resTime) {
       checkReservation(resDate, resTime);
     }
-  }, [resDate, resTime]);
-  const checkReservation = async (date,time) => {
-    const response = await fetch(`http://localhost:5000/reservation/checkReservation?resDate=${date}&resTime=${time}`);
-    const data = await response.json();
-    if (data.length>0) {
-      setResAvailable(false)
-      toast({
-        title:"Opps!",
-        description:"This time slot is already booked. Please choose another one.",
-        status:"error",
-        duration:3000,
-      })
-    }else{
-      setResAvailable(true)
-    }
-  };
-//--------------------------------------------------------------------------------------------------//
-//--------------------------------------------------------------------------------------------------//
-//Set choose date placeholder
-  const [inputType,setInputType]=useState("text")
-  const handleFocus=()=>{setInputType("date")}
-  const handleBlur=()=>{setInputType("text")}
+  }, [resDate, resTime, checkReservation]);
 
-//--------------------------------------------------------------------------------------------------//
-
+  // Set choose date placeholder
+  const [inputType, setInputType] = useState("text");
+  const handleFocus = () => { setInputType("date") }
+  const handleBlur = () => { setInputType("text") }
 
   return (
     <Flex
@@ -169,30 +153,30 @@ const numberOfPeopleRef = useRef();
         justifyContent="center"
         alignItems="center"
       >
-      <Heading color="#F4CE14">Reserve Now!</Heading>
-        <Box bg="white" padding={10} rounded="md" height="auto" minW={{ base: "90%", md: "468px" }} fontSize={{base:"1.5em",lg:"2em"}}>
+        <Heading color="#F4CE14">Reserve Now!</Heading>
+        <Box bg="white" padding={10} rounded="md" height="auto" minW={{ base: "90%", md: "468px" }} fontSize={{ base: "1.5em", lg: "2em" }}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <VStack spacing={4} align="flex-start">
-            {!availableAccessToken?
-              <>
-              <FormControl>
-                <Input name="fname"  ref={fnameRef} {...register('fname')} placeholder='First Name'/>
-                {errors.fname && <p>{errors.fname.message}</p>}
-              </FormControl>
-              <FormControl>
-                <Input name="email" ref={emailRef} {...register('email')} placeholder='Email'/>
-                {errors.email && <p>{errors.email.message}</p>}
-              </FormControl>
-              </>
-              :""}
+              {!availableAccessToken &&
+                <>
+                  <FormControl>
+                    <Input name="fname" ref={fnameRef} {...register('fname')} placeholder='First Name' />
+                    {errors.fname && <p>{errors.fname.message}</p>}
+                  </FormControl>
+                  <FormControl>
+                    <Input name="email" ref={emailRef} {...register('email')} placeholder='Email' />
+                    {errors.email && <p>{errors.email.message}</p>}
+                  </FormControl>
+                </>
+              }
 
               <FormControl>
-                <Input type="number" name="numberOfPeople"  ref={numberOfPeopleRef} {...register('numberOfPeople')} placeholder='Number of People'/>
+                <Input type="number" name="numberOfPeople" ref={numberOfPeopleRef} {...register('numberOfPeople')} placeholder='Number of People' />
                 {errors.numberOfPeople && <p>{errors.numberOfPeople.message}</p>}
               </FormControl>
               <FormControl>
                 <Input type={inputType} name="resDate" {...register('resDate')} placeholder='Choose Date'
-                onFocus={handleFocus} onBlur={handleBlur}/>
+                  onFocus={handleFocus} onBlur={handleBlur} />
                 {errors.resDate && <p>{errors.resDate.message}</p>}
               </FormControl>
               <FormControl>
@@ -217,10 +201,10 @@ const numberOfPeopleRef = useRef();
               </FormControl>
               {capslockState ? <p>Caps Lock is active!</p> : null}
               <Button
-              type="submit"
-              size={{xl:"lg",base:"md"}}
-              backgroundColor={(isValid &&  isResAvailable)?"#F4CE14":"lightgrey"}
-              isDisabled={!(isValid && isResAvailable)}
+                type="submit"
+                size={{ xl: "lg", base: "md" }}
+                backgroundColor={(isValid && isResAvailable) ? "#F4CE14" : "lightgrey"}
+                isDisabled={!(isValid && isResAvailable)}
               >
                 Order!
               </Button>
@@ -231,4 +215,4 @@ const numberOfPeopleRef = useRef();
     </Flex>
   );
 }
-export default BookingForm
+export default BookingForm;

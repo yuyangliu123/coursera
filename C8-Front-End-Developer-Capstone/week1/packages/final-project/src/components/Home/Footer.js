@@ -1,7 +1,7 @@
 import { VStack, Box, Image, Text,  Stack, useBreakpointValue, Divider, Button } from "@chakra-ui/react";
 import theme from "../../theme";
 import { HashLink } from "react-router-hash-link";
-import { useUser } from "../provider/JwtToken";
+import { useUserRotate } from "../provider/JwtTokenRotate";
 const Footer = () => {
     const contact = [{
         th: "Doormat Navigation",
@@ -60,7 +60,7 @@ const Footer = () => {
     }];
 
     const isLargerThanLG = useBreakpointValue({ base: false, lg: true });
-    const {availableToken}=useUser()
+    const {availableToken}=useUserRotate()
     return (
         <>
             <Stack marginTop="2em" height="auto" justifyContent="space-between" direction={{base:"column",xl:"row"}} width="100%">
@@ -87,7 +87,7 @@ const Footer = () => {
                                 )
                             }
                         })}
-                        <Divider colorScheme="orange" size="xl"/>
+                        <Divider borderColor="#e5e5e5" size="lg" borderWidth="1px"/>
                     </VStack>
                 ))}
             </Stack>

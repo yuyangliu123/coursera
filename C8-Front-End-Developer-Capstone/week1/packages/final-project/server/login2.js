@@ -108,21 +108,27 @@ login2.post("/login2", async (req, resp) => {
             const validPassword = await bcrypt.compare(req.body.password, user.password);
             if (validPassword) {
                     // Create a JWT token with a longer expiration (30 days)
-                    const accessToken = createJwtToken(user.fname, user.lname, req.body.email, "10s");
+                    const accessToken = createJwtToken(user.fname, user.lname, req.body.email, "3s");
 					const refreshToken = createJwtToken(user.fname, user.lname, req.body.email, "1d");
-					const newToken = new RefreshToken({
-						email: user.email,
-						refreshToken:refreshToken
-					  });
-					  // Asynchronously save the new user to the database.
-					  let result = await newToken.save();
-					  // Convert the Mongoose document object to a plain JavaScript object.
-					  result = result.toObject();
-					  // Delete the password property from the result object before sending it back to the client.
-					  delete result.password;
-					  // Log the saved user object to the server's console.
-					  console.log(result);
-
+					const sameUser=await RefreshToken.findOne({email:req.body.email})
+					if(sameUser){
+						await RefreshToken.findOneAndUpdate({email:req.body.email},{refreshToken:refreshToken})
+					}else{
+						const newToken = new RefreshToken({
+							email: user.email,
+							refreshToken:refreshToken
+						  });
+						  // Asynchronously save the new user to the database.
+						  let result = await newToken.save();
+						  // Convert the Mongoose document object to a plain JavaScript object.
+						  result = result.toObject();
+						  // Delete the password property from the result object before sending it back to the client.
+						  delete result.password;
+						  // Log the saved user object to the server's console.
+						  console.log(result);
+	
+					}
+					
                     return (
 						resp.status(200).send({ state: true, name: user.fname, accessToken, refreshToken})
 					);
@@ -155,7 +161,7 @@ login2.post('/check-refresh-token', async (req, resp) => {
 			// delete old token in storage
 			await RefreshToken.deleteOne({ refreshToken: req.body.refreshToken });
 			if(sameToken===true){
-				const accessToken = await createJwtToken(req.body.fname, req.body.lname, req.body.email, '10s');
+				const accessToken = await createJwtToken(req.body.fname, req.body.lname, req.body.email, '3s');
         		const refreshToken = await createJwtToken(req.body.fname, req.body.lname, req.body.email, '1d');
 				const newToken = new RefreshToken({
 					email: req.body.email,
