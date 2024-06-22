@@ -1,6 +1,5 @@
 import './App.css';
 import { Route, Routes } from 'react-router-dom';
-import Nav from './components/Nav/Nav';
 
 
 import { ChakraProvider } from "@chakra-ui/react"
