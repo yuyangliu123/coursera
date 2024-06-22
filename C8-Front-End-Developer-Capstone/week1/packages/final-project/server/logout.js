@@ -14,24 +14,24 @@ mongoose.connect('mongodb://localhost:27017/', {
 
 //--------------------------------------------------------------------------------------------------//
 // Schema for users of app
-const BlacklistSchema = new mongoose.Schema({
-    jti: {
-      type: String,
-      required: true,
-    },
-    exp: {
-      type: Number,
-      required: true,
-    },
-  });
-let Blacklist;
-try {
-  Blacklist = mongoose.model(' blacklist');
-} catch (error) {
-    Blacklist = mongoose.model(' blacklist', BlacklistSchema);
-}
+// const BlacklistSchema = new mongoose.Schema({
+//     jti: {
+//       type: String,
+//       required: true,
+//     },
+//     exp: {
+//       type: Number,
+//       required: true,
+//     },
+//   });
+// let Blacklist;
+// try {
+//   Blacklist = mongoose.model(' blacklist');
+// } catch (error) {
+//     Blacklist = mongoose.model(' blacklist', BlacklistSchema);
+// }
 
-Blacklist.createIndexes();
+// Blacklist.createIndexes();
 
 
 const RefreshSchema = new mongoose.Schema({
@@ -62,11 +62,19 @@ RefreshToken.createIndexes();
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const logout = express();
 const cors = require("cors");
 console.log("App listen at port 5000");
 logout.use(express.json());
 logout.use(cors());
+//set sign of cookie
+logout.use(cookieParser())
+const corsOptions = {
+	origin: 'http://localhost:3000', // Change to frontend's URL
+	credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  };
+logout.use(cors(corsOptions));
 logout.get("/", (req, resp) => {
 
 	resp.send("App is Working");
@@ -85,9 +93,10 @@ logout.get("/", (req, resp) => {
 			const user = await RefreshToken.findOne({ email: req.body.email });
 			if (user) {
 				await RefreshToken.deleteOne({email:req.body.email})
+				await resp.clearCookie("refreshToken")
 				// Send the request body back as a response.
 				if(!await RefreshToken.findOne({ email: req.body.email })){
-					resp.status(200).json("Delete complite");
+					resp.status(200).json("Delete complete");
 				}else{
 					resp.status(400).json("Cannot delete user at database");
 				}

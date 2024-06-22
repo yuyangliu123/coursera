@@ -38,25 +38,23 @@ const Nav = () => {
       href: "/login",
     },
   ];
-const {lname,email,availableAccessToken}=useUserRotate()
+const {lname,email,availableAccessToken,accessToken}=useUserRotate()
 const [showLogout,setShowLogout]=useState(false)
 const [showMiniCart,setShowMiniCart]=useState(false)
-const refreshToken= localStorage.getItem("refreshToken");
 const toast = useToast()
 const { cartItem,setCartItem } = useContext(MealContext);
 const [cart,setCart]=useState({})
 const onLogout = async (e) => {
-  if(refreshToken){
+  if(accessToken){
       try {
           let result = await fetch("http://localhost:5000/logout/logout", {
             method: "post",
-            body: JSON.stringify({ email: jwtDecode(refreshToken).email}),
+            body: JSON.stringify({ email: jwtDecode(accessToken).email}),
             headers: {
               "Content-Type": "application/json"
             }
           });
           if(result.status===200){
-            localStorage.removeItem("refreshToken")
             localStorage.removeItem("accessToken")
             console.log(result);
             toast({

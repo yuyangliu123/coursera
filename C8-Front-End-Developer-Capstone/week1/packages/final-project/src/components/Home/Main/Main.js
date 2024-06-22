@@ -6,7 +6,6 @@ import theme from "../../../theme.js"
 import Card from "./Card.js"
 import { faMartiniGlassEmpty } from "@fortawesome/free-solid-svg-icons"
 import { HashLink } from "react-router-hash-link"
-import OrderOnline from "../../OrderOnline/OrderOnline.js"
 
 const Main = () => {
 return (

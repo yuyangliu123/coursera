@@ -1,6 +1,11 @@
 // server.js
 const express = require('express');
 const cors = require("cors");
+const corsOptions = {
+	origin: 'http://localhost:3000', // Change to your frontend's URL
+	credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  };
+const cookieParser = require('cookie-parser');
 const { ApolloServer } = require('apollo-server-express');
 const { resolvers } = require("./apolloGQL/resolvers");
 const { typeDefs } = require("./apolloGQL/models/typeDefs");
@@ -16,7 +21,9 @@ const apiRouter=require("./api")
 const session = require('express-session');
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
+//set sign of cookie
+app.use(cookieParser());
 app.use(session({
     secret: 'keyboard cat',
     resave: false,

@@ -1,50 +1,62 @@
 const mongoose = require('mongoose');
 
-const ShoppingCartSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-  },
-  totalAmount: {
-    type: Number,
-    required: true,
-  },
-  totalItem: {
-    type: Number,
-    required: true,
-  },
-  data: [{
-    strMeal: {
-      type: String,
-      required: true,
-    },
-    numMeal: {
-      type: Number,
-      required: true,
-    },
-    idMeal: {
-      type: String,
-      required: true,
-    },
-    baseAmount: {
-      type: Number,
-      required: true,
-    },
-    cartAmount: {
-      type: Number,
-      required: true,
-    },
-    strMealThumb: {
-      type: String,
-      required: true,
-    },
-  }],
-  Date: {
-    type: Date,
-    default: Date.now,
-  },
+const ShoppingCartSchema =  new mongoose.Schema({
+	email: {
+		type: String,
+		required: true,
+	},
+	totalAmount: {
+		type:Number,
+	},
+	totalItem: {
+		type:Number,
+	},
+	data: [{
+		strMeal: {
+			type: String,
+		},
+		numMeal: {
+			type: Number,
+		},
+		idMeal: {
+			type: String,
+		},
+		baseAmount:{
+			type:Number,
+		},
+		cartAmount:{
+			type:Number,
+		},
+		strMealThumb:{
+			type:String,
+		},
+	}],
+	likeItem: [{
+		strMeal: {
+			type: String,
+		},
+		idMeal: {
+			type: String,
+		},
+		baseAmount:{
+			type:Number,
+		},
+		cartAmount:{
+			type:Number,
+		},
+		strMealThumb:{
+			type:String,
+		},
+		numMeal: {
+			type: Number,
+		},
+	}],
+	Date: {
+		type: Date,
+		default: Date.now,
+	},
 });
 
-const ShoppingCart = mongoose.model('shopping-cart', ShoppingCartSchema);
+const ShoppingCart = mongoose.model('shopping-cart1', ShoppingCartSchema);
 
 module.exports = ShoppingCart;
