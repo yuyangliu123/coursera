@@ -1,8 +1,10 @@
+import { makeProcessedFieldsMerger } from "@apollo/client/cache/inmemory/helpers";
 import {extendTheme} from "@chakra-ui/react"
 const theme = extendTheme({
   layerStyles:{
     inside:{
-      margin:"0 15%"
+      margin:"0 auto",
+      width:{xxl:"1225px",xl:"990px",lg:"920px",base:"100%"}
     }
   },
   textStyles: {

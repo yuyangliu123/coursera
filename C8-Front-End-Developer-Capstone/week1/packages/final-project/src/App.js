@@ -1,16 +1,15 @@
 import './App.css';
-import {Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 
 
-import {ChakraProvider} from "@chakra-ui/react"
+import { ChakraProvider } from "@chakra-ui/react"
 import theme from './theme';
 import FullScreenSection from './components/FullScreenSection';
 
 import Home from './components/Home/Home';
 import BookingForm from './components/Booking/BookingForm';
 import MobileNav from './components/Nav/MobileNav';
-import FloatingNav from './components/FloatingNav';
 import Login from './components/Register/Login';
 import Signup from './components/Register/Signup';
 import { CapslockProvider } from './components/provider/CheckCapslock';
@@ -21,17 +20,16 @@ import { MealContextProvider } from './components/provider/MealContext';
 import FixNav from './components/FixNav';
 import ForgotPassword from './components/Register/ForgotPassword';
 import ResetPassword from './components/Register/ResetPassword';
-import OrderOnlinePage from './components/OrderOnline/OrderOnlinePage';
-import FoodPage from './components/OrderOnline/FoodPage';
 
 
-import {ApolloClient, InMemoryCache,  ApolloProvider } from '@apollo/client';
-import Hello from './Hello';
+import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import Nav2 from './components/Nav/Nav2';
 import FoodPage2 from './components/OrderOnline/FoodPage2';
 import OrderOnlinePage2 from './components/OrderOnline/OrderOnlinePage2';
 import Footer from './components/Home/Footer';
 import CartPage from './components/OrderOnline/CartPage';
+import LikeItem from './components/OrderOnline/LikeItem';
+import CheckoutPage from './components/OrderOnline/CheckoutPage';
 
 const client = new ApolloClient({
   uri: 'http://localhost:5000/graphql',
@@ -52,11 +50,6 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/reservation" element={<CapslockProvider><BookingForm /></CapslockProvider>} />
-              <Route path="/order/:strMeal" element={
-                <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="3vh 0">
-                  <FoodPage />
-                </FullScreenSection>}
-              />
               <Route path="/order2" element={
                 <FullScreenSection backgroundColor="#FFFFFF" height="auto" padding="3vh 0">
                   <OrderOnlinePage2 />
@@ -68,8 +61,18 @@ function App() {
                 </FullScreenSection>}
               />
               <Route path="/cart" element={
-                <FullScreenSection backgroundColor="#FFFFFF" height="auto" minHeight="67vh" padding="10vh 0">
-                  <CartPage/>
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" minHeight="67vh" padding="12vh 0">
+                  <CartPage />
+                </FullScreenSection>}
+              />
+              <Route path="/checkout" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" minHeight="67vh" padding="12vh 0">
+                  <CheckoutPage />
+                </FullScreenSection>}
+              />
+              <Route path="/like" element={
+                <FullScreenSection backgroundColor="#FFFFFF" height="auto" minHeight="67vh" padding="12vh 0">
+                  <LikeItem />
                 </FullScreenSection>}
               />
               <Route path="/login" element={<CapslockProvider><Login /></CapslockProvider>} />

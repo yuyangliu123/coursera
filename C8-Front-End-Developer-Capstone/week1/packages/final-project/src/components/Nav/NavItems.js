@@ -35,21 +35,19 @@ const NavItem = ({ setIsOpen}) => {
   //---------------------------------------------------------------------------//
   //If the token exists, fname and other variables will be defined;
   //otherwise (if not logged in or if the token has expired), fname will not be defined.
-  const {lname,email,availableAccessToken}=useUserRotate()
+  const {lname,email,availableAccessToken,accessToken}=useUserRotate()
   const toast=useToast()
-  const refreshToken= localStorage.getItem("refreshToken");
   const onLogout = async (e) => {
-    if(refreshToken){
+    if(accessToken){
         try {
             let result = await fetch("http://localhost:5000/logout/logout", {
               method: "post",
-              body: JSON.stringify({ email: jwtDecode(refreshToken).email}),
+              body: JSON.stringify({ email: jwtDecode(accessToken).email}),
               headers: {
                 "Content-Type": "application/json"
               }
             });
             if(result.status===200){
-              localStorage.removeItem("refreshToken")
               localStorage.removeItem("accessToken")
               console.log(result);
             toast({
