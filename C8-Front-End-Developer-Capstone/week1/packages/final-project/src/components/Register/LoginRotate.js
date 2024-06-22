@@ -67,6 +67,9 @@ const LoginRotate = () => {
           status: "success",
           duration: 2000,
         });
+        setTimeout(()=>{
+          window.location.href="./" //After singup success, relocate to login page
+        },2000)
       } else if (result.status === 400) {
         setServerError(await result.text());
         toast({
