@@ -30,7 +30,7 @@ return (
       <a href="/reservation"><Button sx={theme.textStyles.StyledButton.baseStyle} size={{lg:"lg",base:"md"}}>Reserve a Table</Button></a>
     </WrapItem>
   </VStack>
-  <Image src="./images/restauranfood.jpg"
+  <Image src="/images/restauranfood.jpg"
     alt="restauran food"
     display={{lg:"block",base:"none"}}
     height="430px"

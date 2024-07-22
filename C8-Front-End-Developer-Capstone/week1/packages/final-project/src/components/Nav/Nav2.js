@@ -5,11 +5,15 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useUserRotate } from "../provider/JwtTokenRotate.js";
 import { MealContext } from "../provider/MealContext.js"
 import { gql, useLazyQuery, useQuery } from '@apollo/client';
+import client from "../provider/apollo-client.js";
 import MiniCart2 from "../OrderOnline/MiniCart2.js";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
-
+import { openDB } from 'idb';
+import { axiosInstanceWithTokenCheck } from '../provider/axiosInstanceWithTokenCheck.js';
+import Cookies from 'js-cookie';
+import useClickOutside from "../provider/useClickOutside.js";
 //If two queries have the same query name and variables, Apollo will treat them as the same query and only make one network request. 
 //Then, when the result of one of the queries returns, Apollo will pass the result to all components using that query. 
 //For example, the following two queries:
@@ -61,6 +65,18 @@ query Shoppingcarts($email: String) {
     }
   }
 `
+// init IndexedDB
+const initDB = async () => {
+  const db = await openDB('meal-database', 1, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains('cart')) {
+        db.createObjectStore('cart', { keyPath: 'idMeal' });
+      }
+    },
+  });
+  return db;
+};
+
 
 const Nav2 = () => {
   const navElement = [
@@ -98,90 +114,111 @@ const Nav2 = () => {
     },
   ];
 
-  const { cartItem, setCartItem } = useContext(MealContext);
-  const { lname, email, availableAccessToken,accessToken } = useUserRotate();
-  const { data: item, loading: loading1, error: error1 } = useQuery(CART_ITEM_QUERY, { 
+  const { cartItem, setCartItem, cartItemChangedRef } = useContext(MealContext);
+  const { lname, email, availableAccessToken, accessToken, isUser } = useUserRotate();
+
+  const { data: item, loading: loading1, error: error1 } = useQuery(CART_ITEM_QUERY, {
     variables: { email },
-    fetchPolicy: 'cache-and-network',});
+    fetchPolicy: 'cache-and-network',
+    skip: !email,
+    //set cart icon number when login
+    onCompleted: (data) => {
+      setCartItem(data.cartitemnumber[0].totalItem);
+    },
+    onError: (error) => {
+      console.log(error);
+    }
+  });
   const [showLogout, setShowLogout] = useState(false);
   const [showMiniCart, setShowMiniCart] = useState(false);
+  const toast = useToast();
 
   //Apollo Client executes the full query against your GraphQL server, without first checking the cache.
   //The query's result is stored in the cache.
   const [fetchCart, { data: cart, loading, error }] = useLazyQuery(CART_QUERY, {
     fetchPolicy: 'cache-and-network',
-    skip:!cartItem || cartItem<=0
+    skip: !email || !cartItem || cartItem <= 0
   });
 
-  const toast = useToast();
 
 
 
-  // Use a ref to track if cartItem has changed
-  const cartItemChangedRef = useRef(false);
+  //------------------------------------------------------------------
+  //load indexedDB data
+  const [cartDB, setCartDB] = useState(null)
+  const loadCart = async () => {
+    const db = await initDB();
+    let existingCart = await db.get('cart', 'cartData');
+    if (existingCart) {
+      setCartDB(existingCart)
+    }
+  };
 
-  //set cart icon number
+
+
+
+
+
+
+
+  //set cart icon number when not login
   useEffect(() => {
-    if (email && email !== "" && item && item.cartitemnumber.length > 0) {
-      setCartItem(item.cartitemnumber[0].totalItem);
+    if (isUser === false) {
+      const loadLikeData = async () => {
+        const db = await initDB();
+        let existingCart = await db.get('cart', 'cartData');
+        if (existingCart) {
+          setCartItem(existingCart.totalItem)
+        }
+      };
+      loadLikeData();
     }
-  }, [email, item]);
-  
-  //if cartItem change, set cartItem Ref to true
-    useEffect(() => {
-    if (cartItem !== undefined) {
-      cartItemChangedRef.current = true;
-    }
-  }, [cartItem]);
+  }, [isUser]);
+  //------------------------------------------------------------------
+
+
+
 
 
   //----------------do not edit-----------------------
+
+
   const onLogout = async (e) => {
     if (accessToken) {
       try {
-        let result = await fetch("http://localhost:5000/logout/logout", {
-          method: "post",
-          credentials:"include", // Allow credentials (cookies, authorization headers, etc.)
-          body: JSON.stringify({ email: jwtDecode(accessToken).email }),
-          headers: { "Content-Type": "application/json" }
-        });
+        let result = await (await axiosInstanceWithTokenCheck()).post("http://localhost:5000/logout/logout");
         if (result.status === 200) {
           localStorage.removeItem("accessToken");
+          Cookies.remove('X-CSRF-Token');
           toast({ title: "Logged Out Successfully", status: "success", duration: 2000 });
           setTimeout(() => {
             window.location.href = "./";
           }, 2000);
-        } else if (result.status === 400) {
-          console.log(await result.text());
-        } else {
-          result = await result.json();
-          console.warn(result);
         }
       } catch (error) {
-        console.error("Error:", error);
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem("accessToken");
+          Cookies.remove('X-CSRF-Token');
+          console.log("Unauthorized - Logged Out");
+        } else if (error.response && error.response.status === 400) {
+          console.log(error.response);
+        } else {
+          console.error("Error:", error);
+        }
       }
     }
   };
 
-  const logoutRef = useRef(); 
+
+  //click outside and hide relative div
+  const logoutRef = useRef();
   const minicartRef = useRef();
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (logoutRef.current && !logoutRef.current.contains(event.target)) {
-        setShowLogout(false); 
-      }
-      if (minicartRef.current && !minicartRef.current.contains(event.target)) {
-        setShowMiniCart(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-//----------------do not edit-----------------------
+  useClickOutside([logoutRef, minicartRef], () => {
+    setShowLogout(false)
+    setShowMiniCart(false)
+  })
+  //----------------do not edit-----------------------
   return (
     <Box width="100%" display={{ base: "none", lg: "block" }}>
       <HStack justifyContent="space-between">
@@ -232,7 +269,8 @@ const Nav2 = () => {
                 onClick={() => {
                   setShowMiniCart(!showMiniCart);
                   if (cartItemChangedRef.current) {
-                    fetchCart({ variables: { email } });
+                    //load cart data
+                    isUser ? fetchCart({ variables: { email } }) : loadCart()
                     cartItemChangedRef.current = false; // reset the flag
                   }
                 }}
@@ -258,45 +296,36 @@ const Nav2 = () => {
                 <Box>
                   <Image src="/images/Basket.svg" />
                 </Box>
-                {showMiniCart && cart && cart.shoppingcarts && cart.shoppingcarts.length > 0 ? (
-                  <MiniCart2 cart={cart.shoppingcarts[0]} showMiniCart={showMiniCart} setShowMiniCart={setShowMiniCart} />
-                ) : (
-                  showMiniCart && (
-                    <MiniCart2 cart={null} showMiniCart={showMiniCart} setShowMiniCart={setShowMiniCart} />
-                  )
-                )}
+                {showMiniCart ? (
+                  <MiniCart2
+                    cart={isUser && cart && cart.shoppingcarts && cart.shoppingcarts.length > 0 ? cart.shoppingcarts[0] : cartDB || null}
+                    showMiniCart={showMiniCart}
+                    setShowMiniCart={setShowMiniCart}
+                  />
+                ) : null}
               </Box>
             );
-          }else if(element.name === "LOGIN") {
+          } else if (element.name === "LOGIN") {
             return (
-                <Box height="auto" position="relative"  ref={logoutRef}>
-                  <Text textStyle="StyledNav"
-                        onClick={() => setShowLogout(!showLogout)}
-                  >
+              <>
+                <HashLink
+                  to="loginrotate"
+                >
+                  <Text textStyle="StyledNav">
                     LOGIN
                   </Text>
-                  <Box
-                  display={showLogout?"block":"none"}
-                  position="absolute"
-                  backgroundColor="#f1f1f1"
-                  right="0" minWidth="100px"
-                  height="auto"
-                  onClick={() => setShowLogout(!showLogout)}
-                  >
-                    <HashLink to="/login"><Box>Log In</Box></HashLink>
-                    <HashLink to="loginrotate"><Box>Log Rotate</Box></HashLink>
-                  </Box>
-                </Box>
+                </HashLink>
+              </>
             );
-          }else if(element.name === "Like"){
-            return(
+          } else if (element.name === "Like") {
+            return (
               <HashLink to="/like">
-              <FontAwesomeIcon
-              icon={faHeart}
-              size="2xl"
-              color= "#ff0000"
-              />
-            </HashLink>
+                <FontAwesomeIcon
+                  icon={faHeart}
+                  size="2xl"
+                  color="#ff0000"
+                />
+              </HashLink>
             )
           } else {
             return (

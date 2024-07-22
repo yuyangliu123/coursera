@@ -10,62 +10,8 @@ mongoose.connect('mongodb://localhost:27017/', {
 }).catch((err) => {
 	console.log(err);
 });
-// Schema for tokens of app
-const UserSchema = new mongoose.Schema({
-	fname: {
-		type: String,
-		required: true,
-	},
-    lname: {
-		type: String,
-		required: true,
-	},
-	email: {
-		type: String,
-		required: true,
-	},
-    password: {
-		type: String,
-		required: true,
-	},
-	Date: {
-		type: Date,
-		default: Date.now,
-	},
-});
-let User;
-try {
-  User = mongoose.model('sign-up-data');
-} catch (error) {
-  User = mongoose.model('sign-up-data', UserSchema);
-}
-const tokenLifeTime="10m"
 
-User.createIndexes();
 
-const ResetSchema = new mongoose.Schema({
-	email: {
-		type: String,
-		required: true,
-	},
-  token:{
-    type:String,
-    require:true
-  },
-	createdAt: {
-    type: Date,
-    default: Date.now,
-    expires: tokenLifeTime, // token will be deleted 10m later automatically
-},
-});
-let Reset;
-try {
-  Reset = mongoose.model('reset-password');
-} catch (error) {
-  Reset = mongoose.model('reset-password', ResetSchema);
-}
-
-Reset.createIndexes();
 
 
 // For backend and express
@@ -80,6 +26,7 @@ const nodemailer=require("nodemailer")
 require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
+const { Reset, User } = require('./model/models');
 console.log("App listen at port 5000");
 forgotpassword.use(express.json());
 forgotpassword.use(cors());

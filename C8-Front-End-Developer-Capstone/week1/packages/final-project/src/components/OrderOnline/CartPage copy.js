@@ -84,16 +84,19 @@ const CartPage = () => {
     };
 
 
+    //load cart item when login
     useEffect(() => {
-        if (isUser && isUser===true) {
-            //load cart item when login
-            if (!loading && !error && cart && cart.cartpageformat && cart.cartpageformat.length > 0){
-                setCartData(cart.cartpageformat[0]);
-            }else{
-                setCartData("")
-            }
-        } else if(isUser===false) {
-            //load cart item when not login
+        if (isUser && !loading && !error && cart && cart.cartpageformat && cart.cartpageformat.length > 0) {
+            setCartData(cart.cartpageformat[0]);
+        } else {
+            setCartData(null); // Clear cartData if no GraphQL data
+        }
+    }, [loading, error, cart]);
+
+
+    //load cart item when not login
+    useEffect(() => {
+        if (!isUser) {
             const loadCart = async () => {
                 const db = await initDB();
                 let existingCart = await db.get('cart', 'cartData');
@@ -103,9 +106,7 @@ const CartPage = () => {
             };
             loadCart();
         }
-    }, [loading, error, cart, isUser]);
-
-
+    }, [isUser]);
 
     //Since both logged-in and non-logged-in states use the same data format,
     //the method of handling input values is the same.

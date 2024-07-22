@@ -11,52 +11,26 @@ mongoose.connect('mongodb://localhost:27017/', {
 	console.log(err);
 });
 //--------------------------------------------------------------------------------------------------//
-
-//--------------------------------------------------------------------------------------------------//
-// Schema for users of app
-const UserSchema = new mongoose.Schema({
-	fname: {
-		type: String,
-		required: true,
-	},
-	email: {
-		type: String,
-		required: true,
-	},
-    numberOfPeople: {
-		type: String,
-		required: true,
-	},
-    resTime: {
-		type: String,
-		required: true,
-	},
-    resDate: {
-		type: Date,
-		required: true,
-	},
-    occasion: {
-		type: String,
-		required: true,
-	},
-	Date: {
-		type: Date,
-		default: Date.now,
-	},
-});
-const User = mongoose.model('users', UserSchema);
-User.createIndexes();
-//--------------------------------------------------------------------------------------------------//
-
-//--------------------------------------------------------------------------------------------------//
 // For backend and express
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const app = express();
 const cors = require("cors");
 const { string } = require('yup');
 console.log("App listen at port 5000");
+const { jwtDecode } = require('jwt-decode');
+const { Reservation } = require('./model/models');
+const authenticate = require('./middleware/authenticate');
 app.use(express.json());
 app.use(cors());
+
+//set sign of cookie
+app.use(cookieParser())
+const corsOptions = {
+	origin: 'http://localhost:3000', // Change to frontend's URL
+	credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+};
+app.use(cors(corsOptions));
 app.get("/", (req, resp) => {
 
 	resp.send("App is Working");
@@ -69,29 +43,26 @@ app.get("/", (req, resp) => {
 
 //--------------------------------------------------------------------------------------------------//
 // This route handler processes user registration requests for the '/register' path.
-app.post("/reservation", async (req, resp) => {
-	try {
-	  // Create a new user instance with the data from the request body.
-	  const user = new User(req.body);
-	  // Asynchronously save the new user to the database.
-	  let result = await user.save();
-	  // Convert the Mongoose document object to a plain JavaScript object.
-	  result = result.toObject();
-	  if (result) {
-		// Delete the password property from the result object before sending it back to the client.
-		delete result.password;
-		// Send the request body back as a response.
-		resp.send(req.body);
-		// Log the saved user object to the server's console.
-		console.log(result);
-	  } else {
-		// If the user already exists, log that the user is already registered.
-		console.log("User already register");
-	  }
-	} catch (e) {
-	  resp.send(`Something Went Wrong,${e}`);
-	}
-  });
+app.post('/reservation',authenticate, async (req, res) => {
+
+			const newUser = new Reservation(req.body);
+			// Asynchronously save the new user to the database.
+			let result = await newUser.save();
+			// Convert the Mongoose document object to a plain JavaScript object.
+			result = result.toObject();
+
+			if (result) {
+				// Delete the password property from the result object before sending it back to the client.
+				delete result.password;
+				// Send the request body back as a response.
+				res.send(req.body);
+				// Log the saved user object to the server's console.
+				console.log(result);
+			} else {
+				res.status(409).send('User already registered');
+			}
+});
+
 //--------------------------------------------------------------------------------------------------//
 
 //--------------------------------------------------------------------------------------------------//
@@ -107,17 +78,17 @@ app.get("/checkReservation", async (req, res) => {
 	nextDate.setDate(date.getDate() + 1);
 
 	// Find all reservations that match the given date and time range.
-	const reservations = await User.find({
-	  resDate: {
-		$gte: date, // Greater than or equal to the start of the reservation date.
-		$lt: nextDate // Less than the start of the next day.
-	  },
-	  resTime: resTime // Matching the exact reservation time.
+	const reservations = await Reservation.find({
+		resDate: {
+			$gte: date, // Greater than or equal to the start of the reservation date.
+			$lt: nextDate // Less than the start of the next day.
+		},
+		resTime: resTime // Matching the exact reservation time.
 	});
 
 	// Send the found reservations back to the client.
 	res.send(reservations);
-  });
+});
 //--------------------------------------------------------------------------------------------------//
 
 module.exports = app;

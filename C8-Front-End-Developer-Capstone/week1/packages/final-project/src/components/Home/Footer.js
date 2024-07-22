@@ -64,7 +64,7 @@ const Footer = () => {
     return (
         <>
             <Stack marginTop="2em" height="auto" justifyContent="space-between" direction={{base:"column",xl:"row"}} width="100%">
-            {isLargerThanLG && <Image src="./images/restaurant.jpg" width="30%" height="auto" />}
+            {isLargerThanLG && <Image src="/images/restaurant.jpg" width="30%" height="auto" />}
                 {contact.map((i) => (
                     <VStack height="100%" width="auto" alignItems={{base:"center",xl:"start"}}>
                         <Box textStyle="CardTitle">{i.th}</Box>

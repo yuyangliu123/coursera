@@ -9,41 +9,7 @@ mongoose.connect('mongodb://localhost:27017/', {
 //--------------------------------------------------------------------------------------------------//
 
 //--------------------------------------------------------------------------------------------------//
-// Schema for users of app
-const MealSchema = new mongoose.Schema({
-	category:{
-		type:String,
-		require:true
-	},
-	strMeal: {
-		type: String,
-		required: true,
-	},
-    strMealThumb: {
-		type: String,
-		required: true,
-	},
-	idMeal: {
-		type: String,
-		required: true,
-	},
-	price:{
-		type:Number,
-		require: true
-	},
-	Date: {
-		type: Date,
-		default: Date.now,
-	},
-});
-let Meal;
-try {
-   Meal = mongoose.model('meal-data');
-} catch (error) {
-   Meal = mongoose.model('meal-data', MealSchema);
-}
 
-Meal.createIndexes();
 
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
@@ -52,6 +18,7 @@ const https=require("https")
 const fs=require("fs")
 const api = express();
 const cors = require("cors");
+const { Meal } = require('./model/models');
 const { string } = require('yup');
 console.log("App listen at port 5000");
 api.use(express.json());

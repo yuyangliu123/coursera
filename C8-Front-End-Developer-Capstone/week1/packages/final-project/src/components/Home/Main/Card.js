@@ -4,17 +4,17 @@ import {faCartShopping} from '@fortawesome/free-solid-svg-icons'
 import theme from "../../../theme.js"
 const Card = () => {
     const props = [{
-        image: "./images/greek salad.jpg",
+        image: "/images/greek salad.jpg",
         name: "Greek salad",
         price: "12.99",
         description: "The famous greek salad of crispy lettuce peppers, olives and out Chicago style feta cheese, garnished with crunchy garlic and rosemary croutons."
     }, {
-        image: "./images/bruchetta.svg",
+        image: "/images/bruchetta.svg",
         name: "Bruchetta",
         price: "5.99",
         description: "Our Bruschetta is made from grilled bread that has been smeared with garlic and seasoned with salt and olive oil."
     },{
-        image: "./images/lemon dessert.jpg",
+        image: "/images/lemon dessert.jpg",
         name: "Lemon Dessert",
         price: "5.00",
         description: "Our This comes straight from grandma’s recipe book, every last ingredient has been sourced and is as authentic as can be imagined. is made from grilled bread that has been smeared with garlic and seasoned with salt and olive oil."
@@ -30,7 +30,15 @@ const Card = () => {
             borderRadius= "16% 16% 0  0"
             marginRight={index !== props.length - 1 ? "3%" : "0"}
             >
-                <Image src={i.image} alt={i.name} width="100%" height= {{base:"8em",xl:"10em"}} objectFit= "cover" borderRadius= "16% 16% 0  0"></Image>
+                <Image
+                    src={i.image}
+                    alt={i.name}
+                    width="100%"
+                    height= {{base:"8em",xl:"10em"}}
+                    objectFit= "cover"
+                    borderRadius= "16% 16% 0  0"
+                    loading="lazy"
+                />
                 <Box margin="5%">
                     <Box display="flex" justifyContent="space-between" paddingBottom="1em">
                         <Box textStyle="CardTitle">{i.name}</Box>

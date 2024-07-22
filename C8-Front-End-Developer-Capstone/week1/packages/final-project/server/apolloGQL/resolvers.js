@@ -1,12 +1,37 @@
-const ShoppingCart = require("./models/ShoppingCart");
+const {ShoppingCart} = require("../model/models");
 
 const resolvers = {
   Query: {
-    shoppingcarts: async (_, { email }) => await ShoppingCart.find({ email }),
-    cartitemnumber: async (_, { email }) => await ShoppingCart.find({ email }),
-    likeitemnumber: async (_, { email }) => await ShoppingCart.find({ email }),
-    cartpageformat: async (_, { email }) => await ShoppingCart.find({ email }),
-    likeitemlist: async (_, { email }) => await ShoppingCart.find({ email })
+    shoppingcarts: async (_, { email }, { user }) => {
+      if (!user) {
+        throw new AuthenticationError('You must be logged in');
+      }
+      return await ShoppingCart.find({ email });
+    },
+    cartitemnumber: async (_, { email }, { user }) => {
+      if (!user) {
+        throw new AuthenticationError('You must be logged in');
+      }
+      return await ShoppingCart.find({ email });
+    },
+    likeitemnumber: async (_, { email }, { user }) => {
+      if (!user) {
+        throw new AuthenticationError('You must be logged in');
+      }
+      return await ShoppingCart.find({ email });
+    },
+    cartpageformat: async (_, { email }, { user }) => {
+      if (!user) {
+        throw new AuthenticationError('You must be logged in');
+      }
+      return await ShoppingCart.find({ email });
+    },
+    likeitemlist: async (_, { email }, { user }) => {
+      if (!user) {
+        throw new AuthenticationError('You must be logged in');
+      }
+      return await ShoppingCart.find({ email });
+    }
   },
   Mutation: {
     updatelikelist: async (_, { email, idMeal, baseAmount, state }) => {
@@ -27,6 +52,7 @@ const resolvers = {
             shoppingcart.data.push(item1);
           }else if(alreadyInCart){
             alreadyInCart.numMeal+=1
+            alreadyInCart.cartAmount+=alreadyInCart.baseAmount
           }
           shoppingcart.totalItem += 1;
           shoppingcart.totalAmount += baseAmount;

@@ -1,10 +1,12 @@
 import { Box, Button, HStack, Image, List, ListItem, VStack ,Text, useToast} from "@chakra-ui/react";
 //A solution to the problem of React Router being unable to scroll to #hash-fragments when navigating with the <Link> component.
 import { HashLink } from "react-router-hash-link";
-import { useToken } from "../provider/JwtToken";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useUserRotate } from "../provider/JwtTokenRotate";
+
+import {axiosInstance, axiosInstanceWithTokenCheck} from '../provider/axiosInstanceWithTokenCheck';
+import Cookies from 'js-cookie';
 const NavItem = ({ setIsOpen}) => {
   const navElement = [
     {
@@ -37,36 +39,32 @@ const NavItem = ({ setIsOpen}) => {
   //otherwise (if not logged in or if the token has expired), fname will not be defined.
   const {lname,email,availableAccessToken,accessToken}=useUserRotate()
   const toast=useToast()
+  
   const onLogout = async (e) => {
-    if(accessToken){
-        try {
-            let result = await fetch("http://localhost:5000/logout/logout", {
-              method: "post",
-              body: JSON.stringify({ email: jwtDecode(accessToken).email}),
-              headers: {
-                "Content-Type": "application/json"
-              }
-            });
-            if(result.status===200){
-              localStorage.removeItem("accessToken")
-              console.log(result);
-            toast({
-              title:"Log Up Successfully",
-              status:"success",
-              duration:2000,
-            })
-            setTimeout(() => {
-              window.location.href = "./";//After singup success, relocate to login page
-            }, 2000);
-            }else if (result.status === 400) {
-              console.log(await result.text());
-            } else {
-              result = await result.json();
-              console.warn(result);
-            }
-          } catch (error) {
-            console.error("Error:", error);
-          }
+    if (accessToken) {
+      try {
+        console.log("Sending logout request...");
+        let result = await (await axiosInstanceWithTokenCheck()).post("http://localhost:5000/logout/logout");
+        console.log("Received response:", result);
+        if (result.status === 200) {
+          localStorage.removeItem("accessToken");
+          Cookies.remove('X-CSRF-Token');
+          toast({ title: "Logged Out Successfully", status: "success", duration: 2000 });
+          setTimeout(() => {
+            window.location.href = "./";
+          }, 2000);
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem("accessToken");
+          Cookies.remove('X-CSRF-Token');
+          console.log("Unauthorized - Logged Out");
+        }else if (error.response && error.response.status === 400) {
+          console.log(error.response);
+        } else {
+          console.error("Error:", error);
+        }
+      }
     }
   };
   //---------------------------------------------------------------------------//

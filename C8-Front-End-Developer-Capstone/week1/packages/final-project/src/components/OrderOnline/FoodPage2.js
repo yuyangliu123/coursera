@@ -7,6 +7,10 @@ import { gql, useQuery } from '@apollo/client';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as farFaHeart } from '@fortawesome/free-regular-svg-icons';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { openDB } from 'idb';
+import {axiosInstance} from '../provider/axiosInstanceWithTokenCheck';
+import Cookies from 'js-cookie';
+import {axiosInstanceWithTokenCheck} from "../provider/axiosInstanceWithTokenCheck";
 
 const LIKE_QUERY = gql`
 query Likeitemnumber($email: String!) {
@@ -16,7 +20,27 @@ query Likeitemnumber($email: String!) {
     }
   }
 }
-`
+`;
+
+// init IndexedDB
+const initDB = async () => {
+    const db = await openDB('meal-database', 1, {
+        upgrade(db) {
+            if (!db.objectStoreNames.contains('cart')) {
+                db.createObjectStore('cart', { keyPath: 'idMeal' });
+            }
+        },
+    });
+    return db;
+};
+
+const updateDB = async (newData) => {
+    const db = await initDB();
+    const tx = db.transaction('cart', 'readwrite');
+    const store = tx.objectStore('cart');
+    await store.put(newData);
+    await tx.done;
+};
 
 const FoodPage2 = () => {
     const [data, setData] = useState();
@@ -25,24 +49,43 @@ const FoodPage2 = () => {
     const [numMeal, setNumMeal] = useState(1);
     const [price, setPrice] = useState();
     const { cartItem, setCartItem } = useContext(MealContext);
-    const { email, availableAccessToken } = useUserRotate();
-    const isUser = availableAccessToken ? availableAccessToken : false;
+    const { email, isUser, accessToken } = useUserRotate();
     const [isLike, setIsLike] = useState(false);
 
     const { loading, error, data: likeData, refetch } = useQuery(LIKE_QUERY,
-        { variables: { email },
-        fetchPolicy: 'network-only',
-        //if user not login, then useQuery would not be trigger
-          skip: !email });
+        {
+            variables: { email },
+            fetchPolicy: 'network-only',
+            //if user not login, then useQuery would not be trigger
+            skip: !email,
+            onCompleted: (data) => {
+                const likeItem = data.likeitemnumber.flatMap(cart => cart.likeItem);
+                const isLiked = likeItem.some(item => item.strMeal === decodedMeal);
+                setIsLike(isLiked);
+            },
+            onError: (error) => {
+                console.log(error);
+            }
+        });
 
+
+
+    // load isLiked state when not login
     useEffect(() => {
-        if (likeData) {
-            const likeItem = likeData.likeitemnumber.flatMap(cart => cart.likeItem);
-            const isLiked = likeItem.some(item => item.strMeal === decodedMeal);
-            setIsLike(isLiked);
+        if (!isUser) {
+            const loadLikeData = async () => {
+                const db = await initDB();
+                let existingCart = await db.get('cart', 'cartData');
+                if (existingCart && existingCart.likeItem) {
+                    const isLiked = existingCart.likeItem.some(item => item.strMeal === decodedMeal);
+                    setIsLike(isLiked);
+                }
+            };
+            loadLikeData();
         }
-    }, [likeData, decodedMeal]);
+    }, [decodedMeal, isUser]);
 
+    //load meal info
     useEffect(() => {
         (async () => {
             if (decodedMeal) {
@@ -58,75 +101,128 @@ const FoodPage2 = () => {
     }, [strMeal]);
 
     const handleLike = async () => {
+        const newIsLike = !isLike;
+
+        const newLikeItem = {
+            strMeal: data.strMeal,
+            idMeal: data.idMeal,
+            baseAmount: data.price,
+            strMealThumb: data.strMealThumb,
+            _id: data.idMeal
+        };
         //if user not login, then handleLike would not be trigger
-        if(!availableAccessToken){
-            console.error("User is not logged in. Cannot perform like action.");
+        if (!isUser) {
+            console.log("User is not logged in. Saving order locally.");
+
+            // save to indexedDB
+            const db = await initDB();
+            let existingCart = await db.get('cart', 'cartData');
+
+            if (existingCart) {
+                if (newIsLike === true) {
+                    existingCart.likeItem.push(newLikeItem);
+                } else {
+                    existingCart.likeItem = existingCart.likeItem.filter(item => item.idMeal !== newLikeItem.idMeal)
+                }
+            } else {
+                // Create new cart data
+                existingCart = {
+                    isUser: isUser,
+                    totalAmount: price,
+                    totalItem: numMeal,
+                    data: [],
+                    likeItem: [newLikeItem]
+                };
+            }
+
+            await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
+            setIsLike(newIsLike)
             return;
         }
-        const newIsLike = !isLike;
+
+
         try {
-            await fetch(`http://localhost:5000/api/update`, {
-                method: "post",
-                body: JSON.stringify({
+            let result = await (await axiosInstanceWithTokenCheck()).post("http://localhost:5000/api/update",
+                {
                     event: "like",
                     likeState: newIsLike ? "like" : "none",
-                    isUser: isUser,
-                    email: email ? email : "",
                     meal: data.strMeal,
                     idMeal: data.idMeal,
                     price: data.price,
                     strMealThumb: data.strMealThumb,
-                }),
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    setIsLike(newIsLike);
-                    //refetch() is necessary because when navigating to other routes through SPA, it does not reload,
-                    //so useQuery will not be triggered. If click handleLike, move to another page (for example, /order2),
-                    //and then return to FoodPage, isLiked will not display correctly.
-                    refetch()
-                    console.log("refetch occur");
                 });
-        } catch (err) {
-            console.log(err);
+            if (result.status === 200) {
+                setIsLike(newIsLike);
+                refetch();
+            }
+        } catch (error) {
+            console.log(error);
         }
     };
 
     const onOrder = async () => {
         const orderData = {
-            isUser: isUser,
             meal: data.strMeal,
             numMeal: numMeal,
             idMeal: data.idMeal,
             price: price,
             strMealThumb: data.strMealThumb
         };
-        if (!availableAccessToken) {
+        const newOrderItem = {
+            strMeal: data.strMeal,
+            numMeal: numMeal,
+            idMeal: data.idMeal,
+            baseAmount: data.price,
+            cartAmount: price,
+            strMealThumb: data.strMealThumb,
+            _id: data.idMeal // assuming idMeal is unique and used as the key
+        };
+
+
+        if (!isUser) {
             console.log("User is not logged in. Saving order locally.");
-            let localOrders = JSON.parse(localStorage.getItem('localOrders')) || [];
-            localOrders.push(orderData);
-            localStorage.setItem('localOrders', JSON.stringify(localOrders));
+
+            // save data to IndexedDB
+            const db = await initDB();
+            let existingCart = await db.get('cart', 'cartData');
+
+            if (existingCart) {
+                // Update existing cart data
+                existingCart.totalAmount += price;
+                existingCart.totalAmount = parseFloat(existingCart.totalAmount.toFixed(2))
+                existingCart.totalItem += numMeal;
+
+                const existingItemIndex = existingCart.data.findIndex(item => item.idMeal === newOrderItem.idMeal);
+                if (existingItemIndex !== -1) {
+                    existingCart.data[existingItemIndex].numMeal += numMeal;
+                    existingCart.data[existingItemIndex].cartAmount += price;
+                } else {
+                    existingCart.data.push(newOrderItem);
+                }
+            } else {
+                // Create new cart data
+                existingCart = {
+                    isUser: isUser,
+                    totalAmount: price,
+                    totalItem: numMeal,
+                    data: [newOrderItem],
+                    likeItem: []
+                };
+            }
+
+            await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
             setCartItem(currentCartItem => currentCartItem + numMeal);
             return;
-        }
-
-        try {
-            await fetch(`http://localhost:5000/api/addToCart`, {
-                method: "post",
-                body: JSON.stringify(Object.assign(orderData,{email:email})),
-                headers: {
-                    "Content-Type": "application/json"
+        } else {
+            try {
+                let result = await(await axiosInstanceWithTokenCheck()).post("http://localhost:5000/api/addToCart", orderData);
+                if (result.status === 200) {
+                    setCartItem(currentCartItem => currentCartItem + numMeal);
                 }
-            })
-                .then(response => response.json())
-                .then(data => { console.log(data) });
-            setCartItem(currentCartItem => currentCartItem + numMeal);
-        } catch (err) {
-            console.log(err);
+            } catch (err) {
+                console.log(err);
+            }
+
         }
     };
 

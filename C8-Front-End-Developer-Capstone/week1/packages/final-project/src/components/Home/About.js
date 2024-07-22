@@ -24,14 +24,16 @@ const About = () => {
             justify-content= "flex-start"
             position="relative"
             >
-                <Image src="./images/Mario and Adrian B.jpg"
+                <Image src="/images/Mario and Adrian B.jpg"
                     alt="Mario and Adrian B"
                     objectFit= "cover"
                     width={{base:"100%",xxl:"24rem"}}
                     height={{base:"100%",xxl:"33rem"}}
                     borderRadius="16"
-                    margin="1% 0"></Image>
-                <Image src="./images/Mario and Adrian A.jpg"
+                    margin="1% 0"
+                    loading="lazy"
+                    />
+                <Image src="/images/Mario and Adrian A.jpg"
                     alt="Mario and Adrian A"
                     objectFit="cover"
                     width={{base:"100%",xxl:"24rem"}}
@@ -40,7 +42,9 @@ const About = () => {
                     left= "-14rem"
                     top= "12rem"
                     borderRadius="16"
-                    margin="1% 0"></Image>
+                    margin="1% 0"
+                    loading="lazy"
+                    />
             </Box>
         </Stack>
     )
