@@ -10,42 +10,6 @@ mongoose.connect('mongodb://localhost:27017/', {
 }).catch((err) => {
 	console.log(err);
 });
-//--------------------------------------------------------------------------------------------------//
-
-//--------------------------------------------------------------------------------------------------//
-// Schema for users of app
-const UserSchema = new mongoose.Schema({
-	fname: {
-		type: String,
-		required: true,
-	},
-    lname: {
-		type: String,
-		required: true,
-	},
-	email: {
-		type: String,
-		required: true,
-		unique:true,
-	},
-    password: {
-		type: String,
-		required: true,
-	},
-	Date: {
-		type: Date,
-		default: Date.now,
-	},
-});
-let User;
-try {
-  User = mongoose.model('sign-up-data');
-} catch (error) {
-  User = mongoose.model('sign-up-data', UserSchema);
-}
-
-User.createIndexes();
-//--------------------------------------------------------------------------------------------------//
 
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
@@ -55,6 +19,7 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const { string } = require('yup');
+const { User } = require('./model/models');
 console.log("App listen at port 5000");
 signup.use(express.json());
 signup.use(cors());

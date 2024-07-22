@@ -17,32 +17,32 @@ import {
 import theme from '../../theme';
 import { useUserRotate } from '../provider/JwtTokenRotate';
 import { useCapslock } from '../provider/CheckCapslock';
-
+import Cookies from "js-cookie"
 
 
 
 const BookingForm = () => {
   // Define Validation Rules
-const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToken") ? {
-  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
-  resTime: yup.string().required('Reservation time is required'),
-  resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
-  occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
-} : {
-  fname: yup.string().required("First name is required"),
-  email: yup.string().email('請輸入有效的電子郵件地址').required('電子郵件是必填項'),
-  numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
-  resTime: yup.string().required('Reservation time is required'),
-  resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
-  occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
-}), []);
+  const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToken") ? {
+    numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
+    resTime: yup.string().required('Reservation time is required'),
+    resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
+    occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
+  } : {
+    fname: yup.string().required("First name is required"),
+    email: yup.string().email('請輸入有效的電子郵件地址').required('電子郵件是必填項'),
+    numberOfPeople: yup.number().typeError('人數必須是數字').min(1, '至少一人').max(20, "最多20人").required('人數是必填項'),
+    resTime: yup.string().required('Reservation time is required'),
+    resDate: yup.date().typeError('請輸入有效日期').required('日期是必填項'),
+    occasion: yup.string().oneOf(['Birthday', 'Anniversary'], '必須是 Birthday 或 Anniversary').required('場合是必填項'),
+  }), []);
 
   const { register, handleSubmit, watch, formState: { errors, isValid }, reset } = useForm({
     mode: 'onChange', // Real-time validation
     resolver: yupResolver(schema)
   });
 
-  const { fname, email, availableAccessToken } = useUserRotate();
+  const { fname, email, availableAccessToken, isUser, accessToken } = useUserRotate();
   const toast = useToast();
 
   // Monitor the Changes in Form Values
@@ -52,16 +52,22 @@ const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToke
   const resTime = watch('resTime');
   const resDate = watch('resDate');
   const occasion = watch('occasion');
-
-  // Submit form
+//---------------------------------------------------------------here should change//-------------------------------------------------------------------------------------------------------------
+//------------------------------use validate  method to prevent attack-------------------------------------------------------
+// Submit form
   const onSubmit = useCallback(async (data) => {
+    let csrf_token = Cookies.get(`X-CSRF-Token`);
     try {
       const result = await fetch("http://localhost:5000/reservation/reservation", {
         method: "post",
         body: JSON.stringify(availableAccessToken ? { fname, email, numberOfPeople, resTime, resDate, occasion }
           : { fname: userFname, email: userEmail, numberOfPeople, resTime, resDate, occasion }),
+        credentials: "include", // Allow credentials (cookies, authorization headers, etc.)
+        //use bearer token
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          "X-CSRF-Token": `${csrf_token}`
         }
       });
       const resultJson = await result.json();
@@ -82,6 +88,7 @@ const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToke
     }
   }, [availableAccessToken, fname, email, numberOfPeople, resTime, resDate, occasion, userFname, userEmail, toast]);
 
+
   // Add detect if capslock on or off
   const capslockState = useCapslock();
 
@@ -93,20 +100,20 @@ const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToke
   useEffect(() => {
     // Set a timer to check if the input value has been autofilled.
     const timer = setTimeout(() => {
-      if (fnameRef.current && fnameRef.current.value !== userFname) {
-        fnameRef.current.value = userFname;
-      }
-      if (emailRef.current && emailRef.current.value !== userEmail) {
-        emailRef.current.value = userEmail;
-      }
-      if (numberOfPeopleRef.current && numberOfPeopleRef.current.value !== numberOfPeople) {
-        numberOfPeopleRef.current.value = numberOfPeople;
-      }
+      const refs = [fnameRef, emailRef, numberOfPeopleRef];
+      const values = [userFname, userEmail, numberOfPeople];
+
+      refs.forEach((ref, index) => {
+        if (ref.current && ref.current.value !== values[index]) {
+          ref.current.value = values[index];
+        }
+      });
     }, 100);
 
     // Cleanup function will run when the component unmounts or when the dependencies of useEffect change.
     return () => clearTimeout(timer);
   }, [userFname, userEmail, numberOfPeople]);
+
 
   // Check if reservation is available or not
   const [isResAvailable, setResAvailable] = useState();
@@ -157,7 +164,7 @@ const schema = useMemo(() => yup.object().shape(localStorage.getItem("accessToke
         <Box bg="white" padding={10} rounded="md" height="auto" minW={{ base: "90%", md: "468px" }} fontSize={{ base: "1.5em", lg: "2em" }}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <VStack spacing={4} align="flex-start">
-              {!availableAccessToken &&
+              {!isUser &&
                 <>
                   <FormControl>
                     <Input name="fname" ref={fnameRef} {...register('fname')} placeholder='First Name' />

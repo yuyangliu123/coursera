@@ -10,62 +10,7 @@ mongoose.connect('mongodb://localhost:27017/', {
 }).catch((err) => {
     console.log(err);
 });
-// Schema for tokens of app
-const UserSchema = new mongoose.Schema({
-    fname: {
-        type: String,
-        required: true,
-    },
-    lname: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-    },
-    password: {
-        type: String,
-        required: true,
-    },
-    Date: {
-        type: Date,
-        default: Date.now,
-    },
-});
-let User;
-try {
-    User = mongoose.model('sign-up-data');
-} catch (error) {
-    User = mongoose.model('sign-up-data', UserSchema);
-}
 
-User.createIndexes();
-
-
-const RefreshSchema = new mongoose.Schema({
-    refreshToken: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        expires: '1d', // 這個令牌將在1天後自動從數據庫中刪除
-    },
-});
-let RefreshToken;
-try {
-    RefreshToken = mongoose.model('RefreshToken');
-} catch (error) {
-    RefreshToken = mongoose.model('RefreshToken', RefreshSchema);
-}
-
-RefreshToken.createIndexes();
 // For backend and express
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -78,6 +23,8 @@ require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
 const { jwtDecode } = require('jwt-decode');
+const { RefreshToken, User } = require('./model/models');
+const authenticate = require('./middleware/authenticate');
 console.log("App listen at port 5000");
 login2.use(express.json());
 
@@ -117,17 +64,19 @@ login2.post("/login2", async (req, resp) => {
             const validPassword = await bcrypt.compare(req.body.password, user.password);
             if (validPassword) {
                 // Create a JWT token with a longer expiration (1 days)
-                const accessToken = createJwtToken(user.fname, user.lname, req.body.email, "3s");
+                const accessToken = createJwtToken(user.fname, user.lname, req.body.email, "10s");
                 const refreshToken = createJwtToken(user.fname, user.lname, req.body.email, "1d");
                 // Assume that if the user manually deletes the rt (refresh token), then after a normal login,
                 // it will directly update the rt part. Otherwise, it will create a new database
                 const sameUser = await RefreshToken.findOne({ email: req.body.email })
                 if (sameUser) {
-                    await RefreshToken.findOneAndUpdate({ email: req.body.email }, { refreshToken: refreshToken })
+                    await RefreshToken.findOneAndUpdate({ email: req.body.email }, { refreshToken: refreshToken, accessToken: accessToken })
                 } else {
                     const newToken = new RefreshToken({
                         email: user.email,
-                        refreshToken: refreshToken
+                        refreshToken: refreshToken,
+                        accessToken: accessToken
+
                     });
                     // Asynchronously save the new user to the database.
                     let result = await newToken.save();
@@ -158,64 +107,30 @@ login2.post("/login2", async (req, resp) => {
 // This route handler processes user login requests for the '/login2' path.
 
 
-login2.post('/check-refresh-token', async (req, resp) => {
-    if (req.body.state === "ok") {
-        try {
-            // Validate user data (e.g., check if email exists)
-            const user = await User.findOne({ email: req.body.email });
-            if (user) {
-                const refreshtoken = await RefreshToken.findOne({ email: req.body.email });
-                const refreshTokenCookie = req.cookies.refreshToken;
+login2.post('/check-refresh-token',authenticate, async (req, resp) => {
+    const refreshTokenCookie = req.cookies.refreshToken;
+    const accessToken = req.headers['authorization'].split(" ")[1]
+    const { email, fname, lname } = jwtDecode(accessToken) ?? {};
 
-                if (!refreshTokenCookie) {
-                    resp.clearCookie("refreshToken");
-                    return resp.status(401).send("No refresh token cookie found");
-                }
+    // delete old token in storage
+    await RefreshToken.deleteOne({ refreshToken: refreshTokenCookie });
 
-                try {
-                    const availableRefreshToken = jwtDecode(refreshTokenCookie)?.exp > (Date.now() / 1000);
-                    const sameToken = refreshtoken && refreshtoken.refreshToken === refreshTokenCookie;
+    const newAccessToken = createJwtToken(fname, lname, email, '10s');
+    const newRefreshToken = createJwtToken(fname, lname, email, '1d');
+    const newToken = new RefreshToken({
+        email: email,
+        refreshToken: newRefreshToken,
+        accessToken: newAccessToken
+    });
 
-                    if (sameToken && availableRefreshToken) {
-                        // delete old token in storage
-                        await RefreshToken.deleteOne({ refreshToken: refreshTokenCookie });
+    // Save the new refresh token to the database
+    await newToken.save();
 
-                        const accessToken = createJwtToken(req.body.fname, req.body.lname, req.body.email, '3s');
-                        const newRefreshToken = createJwtToken(req.body.fname, req.body.lname, req.body.email, '1d');
-                        const newToken = new RefreshToken({
-                            email: req.body.email,
-                            refreshToken: newRefreshToken
-                        });
+    // Set HTTP-only cookies for the new refresh token
+    resp.cookie('refreshToken', newRefreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true, sameSite: 'Lax' });
 
-                        // Save the new refresh token to the database
-                        await newToken.save();
-
-                        // Set HTTP-only cookies for the new refresh token
-                        resp.cookie('refreshToken', newRefreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true, sameSite: 'Lax' });
-
-                        // Respond with the new access token
-                        return resp.status(200).json({ accessToken });
-                    } else {
-                        // If the refresh token is invalid or expired, clear the cookie and delete from storage
-                        await RefreshToken.deleteOne({ refreshToken: refreshtoken.refreshToken });
-                        resp.clearCookie("refreshToken");
-                        return resp.status(400).send("Not same token or token expired");
-                    }
-                } catch (error) {
-                    resp.clearCookie("refreshToken");
-                    return resp.status(400).send("Invalid token specified: must be a string");
-                }
-            } else {
-                // If the user does not exist, clear the cookie and send an error message
-                resp.clearCookie("refreshToken");
-                return resp.status(401).send("User does not exist");
-            }
-        } catch (error) {
-            return resp.status(400).json({ error: error.message });
-        }
-    } else {
-        return resp.status(400).send("Invalid state");
-    }
+    // Respond with the new access token
+    return resp.status(200).json({ accessToken: newAccessToken });
 });
 
 

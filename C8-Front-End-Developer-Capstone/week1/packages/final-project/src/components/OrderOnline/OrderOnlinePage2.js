@@ -9,13 +9,15 @@ import OrderOnline2 from "./OrderOnline2.js"
 const OrderOnlinePage2 = () => {
 return (
 <>
-  <VStack w="100%" align="start" padding="10vh 0" id="menu">
+  <VStack w="100%" align="start" padding="10vh 0"id="menu">
     <Stack w="100%" justifyContent="space-between" marginBottom="50px" direction={{base:"column",lg:"row"}}>
-      <Box  as="h1" textStyle="StyledH1" color="black">
+      <Box  as="h1" textStyle="StyledH1" color="black" display="none">
         Menu page
       </Box>
     </Stack>
+    <Box position="relative" width="100%">
       <OrderOnline2/>
+    </Box>
   </VStack>
 </>
 )

@@ -33,7 +33,7 @@ const CustomerCard = () => {
                     comment:"Little Lemon exceeded my expectations. The fusion of traditional recipes and modern twists was fantastic, and the service was excellent. I highly recommend this place!"
                 },{
                     score:"★★★★★",
-                    comment:"Little Lemon"
+                    comment:"Little Lemon offers an exceptional dining experience. The blend of traditional and modern flavors is superb, and the staff is incredibly attentive. A must-visit!"
                 }];
 
                 // Shuffle the ratings

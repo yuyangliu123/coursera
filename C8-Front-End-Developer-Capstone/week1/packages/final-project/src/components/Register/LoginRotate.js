@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Flex,
   Heading,
@@ -17,12 +17,9 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { useCapslock } from "../provider/CheckCapslock";
-
-// Define Validation Rules
-const schema = yup.object().shape({
-  email: yup.string().required("Please enter your email"),
-  password: yup.string().required("Please enter your password"),
-});
+import axios from 'axios'
+import Cookies from 'js-cookie';
+import { v4 as uuidv4 } from 'uuid';
 
 
 
@@ -32,16 +29,47 @@ const LoginRotate = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
   const capslockState = useCapslock();
+  // Define Validation Rules
+  const schema = yup.object().shape({
+    email: yup.string().required("Please enter your email"),
+    password: yup.string().required("Please enter your password"),
+  });
+
+
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isValid },
   } = useForm({
     mode: "onSubmit",
     resolver: yupResolver(schema),
   });
+
+  const userEmail = watch('email');
+
   const handleShowClick = () => setShowPassword(!showPassword);
   const toast = useToast();
+
+  // use useEffect & useRef to deal with autofill not trigger onChange problem
+  const emailRef = useRef();
+
+  useEffect(() => {
+    // Set a timer to check if the input value has been autofilled.
+    const timer = setTimeout(() => {
+      const refs = [emailRef];
+      const values = [userEmail];
+
+      refs.forEach((ref, index) => {
+        if (ref.current && ref.current.value !== values[index]) {
+          ref.current.value = values[index];
+        }
+      });
+    }, 100);
+
+    // Cleanup function will run when the component unmounts or when the dependencies of useEffect change.
+    return () => clearTimeout(timer);
+  }, [userEmail]);
 
   // Submit form
   const onSubmit = async (data) => {
@@ -49,29 +77,30 @@ const LoginRotate = () => {
       const requestBody = {
         ...data,
       };
-      let result = await fetch("http://localhost:5000/login2/login2", {
-        method: "post",
-        body: JSON.stringify(requestBody),
-        credentials:"include", // Allow credentials (cookies, authorization headers, etc.)
+      const result = await axios.post("http://localhost:5000/login2/login2", requestBody, {
+        withCredentials: true, // Allow credentials (cookies, authorization headers, etc.)
         headers: {
           "Content-Type": "application/json",
         },
       });
       if (result.status === 200) {
-        const response = await result.json();
+        const response = result.data;
         //set at & rt to local storage
         localStorage.setItem("accessToken", response.accessToken);
+        // Set csrf_token in cookie
+        const csrf_token = uuidv4();
+        Cookies.set('X-CSRF-Token', csrf_token, { secure: true, sameSite: 'strict' });
         toast({
           title: "Login Success",
           description: "You will soon be redirected",
           status: "success",
           duration: 2000,
         });
-        setTimeout(()=>{
-          window.location.href="./" //After singup success, relocate to login page
-        },2000)
+        setTimeout(() => {
+          window.location.href = "./" //After singup success, relocate to login page
+        }, 2000)
       } else if (result.status === 400) {
-        setServerError(await result.text());
+        setServerError(result.statusText);
         toast({
           title: "Login Failed",
           description: "Something Went Wrong",
@@ -108,6 +137,7 @@ const LoginRotate = () => {
                   <Input
                     type="email"
                     placeholder="email address"
+                    ref={emailRef}
                     {...register("email")}
                   />
                 </InputGroup>
