@@ -1,15 +1,7 @@
 //--------------------------------------------------------------------------------------------------//
 // To connect with mongoDB database
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/', {
-	dbName: 'little-lemon',
-	useNewUrlParser: true,
-	useUnifiedTopology: true
-}).then(() => {
-	console.log('Connected to little-lemon database');
-}).catch((err) => {
-	console.log(err);
-});
+const mongoose = require('./db');
+
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
 const express = require('express');
@@ -43,24 +35,24 @@ app.get("/", (req, resp) => {
 
 //--------------------------------------------------------------------------------------------------//
 // This route handler processes user registration requests for the '/register' path.
-app.post('/reservation',authenticate, async (req, res) => {
+app.post('/reservation',  async (req, res) => {
 
-			const newUser = new Reservation(req.body);
-			// Asynchronously save the new user to the database.
-			let result = await newUser.save();
-			// Convert the Mongoose document object to a plain JavaScript object.
-			result = result.toObject();
+	const newUser = new Reservation(req.body);
+	// Asynchronously save the new user to the database.
+	let result = await newUser.save();
+	// Convert the Mongoose document object to a plain JavaScript object.
+	result = result.toObject();
 
-			if (result) {
-				// Delete the password property from the result object before sending it back to the client.
-				delete result.password;
-				// Send the request body back as a response.
-				res.send(req.body);
-				// Log the saved user object to the server's console.
-				console.log(result);
-			} else {
-				res.status(409).send('User already registered');
-			}
+	if (result) {
+		// Delete the password property from the result object before sending it back to the client.
+		delete result.password;
+		// Send the request body back as a response.
+		res.send(req.body);
+		// Log the saved user object to the server's console.
+		console.log(result);
+	} else {
+		res.status(409).send('User already registered');
+	}
 });
 
 //--------------------------------------------------------------------------------------------------//
@@ -68,8 +60,11 @@ app.post('/reservation',authenticate, async (req, res) => {
 //--------------------------------------------------------------------------------------------------//
 // This route handler checks for reservations on a specific date and time.
 app.get("/checkReservation", async (req, res) => {
-	// Extract the reservation date and time from the query parameters.
-	const { resDate, resTime } = req.query;
+	// Extract the reservation date from the query parameters.
+	const { resDate } = req.query;
+
+	// Define the time slots.
+	const timeSlots = ['17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
 
 	// Convert the reservation date to a JavaScript Date object.
 	const date = new Date(resDate);
@@ -77,18 +72,24 @@ app.get("/checkReservation", async (req, res) => {
 	const nextDate = new Date(date);
 	nextDate.setDate(date.getDate() + 1);
 
-	// Find all reservations that match the given date and time range.
+	// Find all reservations that match the given date.
 	const reservations = await Reservation.find({
 		resDate: {
 			$gte: date, // Greater than or equal to the start of the reservation date.
 			$lt: nextDate // Less than the start of the next day.
-		},
-		resTime: resTime // Matching the exact reservation time.
+		}
 	});
 
-	// Send the found reservations back to the client.
-	res.send(reservations);
+	// Check each time slot.
+	const response=timeSlots.map(t=>({
+		time:t,
+		isOrder:!reservations.some(reservation => reservation.resTime === t)
+	}))
+
+	// Send the response back to the client.
+	res.json(response);
 });
+
 //--------------------------------------------------------------------------------------------------//
 
 module.exports = app;

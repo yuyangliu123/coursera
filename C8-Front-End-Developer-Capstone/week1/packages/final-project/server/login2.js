@@ -1,15 +1,6 @@
 
 // To connect with mongoDB database
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/', {
-    dbName: 'little-lemon',
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to little-lemon database');
-}).catch((err) => {
-    console.log(err);
-});
+const mongoose = require('./db');
 
 // For backend and express
 const express = require('express');
@@ -18,13 +9,15 @@ const login2 = express();
 const cors = require("cors");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-const uuid = require("uuid")
+const { v4: uuidv4 } = require('uuid');
 require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
 const { jwtDecode } = require('jwt-decode');
 const { RefreshToken, User } = require('./model/models');
 const authenticate = require('./middleware/authenticate');
+const requireRefreshToken = require('./middleware/requireRefreshToken');
+
 console.log("App listen at port 5000");
 login2.use(express.json());
 
@@ -44,11 +37,12 @@ login2.get("/", (req, resp) => {
     // backend working properly
 });
 
-const createJwtToken = (fname, lname, email, expiresIn) => {
+const createJwtToken = (fname, lname, email, _id, expiresIn) => {
     const payload = {
         fname: fname,
         lname: lname,
         email: email,
+        _id: _id,
     };
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: expiresIn });
     return token;
@@ -56,39 +50,61 @@ const createJwtToken = (fname, lname, email, expiresIn) => {
 
 // This route handler processes user login requests for the '/login2' path.
 login2.post("/login2", async (req, resp) => {
+    const { email, password } = req.body;
     try {
         // Find a user instance with the email from the request body.
-        const user = await User.findOne({ email: req.body.email });
+        const user = await User.findOne({ email: email });
         if (user) {
+
             // Check if the password matches.
-            const validPassword = await bcrypt.compare(req.body.password, user.password);
+            const validPassword = await bcrypt.compare(password, user.password);
             if (validPassword) {
                 // Create a JWT token with a longer expiration (1 days)
-                const accessToken = createJwtToken(user.fname, user.lname, req.body.email, "10s");
-                const refreshToken = createJwtToken(user.fname, user.lname, req.body.email, "1d");
+                const accessToken = createJwtToken(user.fname, user.lname, email, user._id, "10s");
+                const refreshToken = createJwtToken(user.fname, user.lname, email, user._id, "1d");
+                const sessionId = req.cookies.sessionId
                 // Assume that if the user manually deletes the rt (refresh token), then after a normal login,
                 // it will directly update the rt part. Otherwise, it will create a new database
-                const sameUser = await RefreshToken.findOne({ email: req.body.email })
-                if (sameUser) {
-                    await RefreshToken.findOneAndUpdate({ email: req.body.email }, { refreshToken: refreshToken, accessToken: accessToken })
-                } else {
-                    const newToken = new RefreshToken({
-                        email: user.email,
-                        refreshToken: refreshToken,
-                        accessToken: accessToken
+                // const sameUser = await RefreshToken.findOne({ email: email })
+                // if (sameUser) {
+                //     await RefreshToken.findOneAndUpdate({ email: email }, { user: user._id, refreshToken: refreshToken })
+                // } else {
 
-                    });
-                    // Asynchronously save the new user to the database.
-                    let result = await newToken.save();
-                    // Convert the Mongoose document object to a plain JavaScript object.
-                    result = result.toObject();
-                    // Delete the password property from the result object before sending it back to the client.
-                    delete result.password;
-                    // Log the saved user object to the server's console.
-                    console.log(result);
+                // 準備要儲存或更新的資料
+                const tokenData = {
+                    user: user._id,
+                    email: user.email,
+                    refreshToken: refreshToken,
+                    sessionId: sessionId,
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    lastUsedAt: Date.now()
+                };
+
+                // 使用 findOneAndUpdate 搭配 upsert: true 來簡化邏輯
+                // 如果找到 sessionId 匹配的記錄，則更新它；如果沒有找到，則創建一個新的
+                const updatedOrNewToken = await RefreshToken.findOneAndUpdate(
+                    { sessionId: sessionId }, // 查詢條件
+                    tokenData, // 更新或插入的資料
+                    {
+                        new: true, // 返回更新後的文檔 (如果執行了更新) 或新創建的文檔 (如果執行了插入)
+                        upsert: true, // 如果找不到匹配的文檔，則創建一個新的
+                        setDefaultsOnInsert: true // 對於新創建的文檔，如果模型有預設值，則應用它們
+                    }
+                );
+
+                // 判斷是更新還是創建 (可以透過 updatedOrNewToken 來判斷，但這裡簡單用 console.log 示意)
+                if (updatedOrNewToken._id) { // 通常新建立的文檔會有 _id
+                    console.log(`RefreshToken ${updatedOrNewToken.isNew ? '已創建' : '已更新'}。`);
                 }
+                let result = updatedOrNewToken.toObject();
+                if (result.user && result.user.password) {
+                    delete result.user.password;
+                }
+                // }
                 // Set HTTP-only cookies for the access and refresh tokens
                 // This cookies are sent to the client and used for authentication in future requests
+                // resp.cookie('sessionId', sessionId, { maxAge: 24 * 60 * 60 * 1000, httpOnly: false, secure: true, sameSite: 'Lax' });
                 resp.cookie('refreshToken', refreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true, sameSite: 'Lax' });
                 resp.status(200).send({ state: true, name: user.fname, accessToken });
             } else {
@@ -106,31 +122,39 @@ login2.post("/login2", async (req, resp) => {
 
 // This route handler processes user login requests for the '/login2' path.
 
+//here
+login2.post('/check-refresh-token', requireRefreshToken, async (req, resp) => {
 
-login2.post('/check-refresh-token',authenticate, async (req, resp) => {
-    const refreshTokenCookie = req.cookies.refreshToken;
-    const accessToken = req.headers['authorization'].split(" ")[1]
-    const { email, fname, lname } = jwtDecode(accessToken) ?? {};
+    const { user, tokenRecord } = req; // 從 req 獲取用戶和舊的 RefreshToken 記錄
 
-    // delete old token in storage
-    await RefreshToken.deleteOne({ refreshToken: refreshTokenCookie });
+    try {
+        await RefreshToken.deleteOne({ _id: tokenRecord._id });
 
-    const newAccessToken = createJwtToken(fname, lname, email, '10s');
-    const newRefreshToken = createJwtToken(fname, lname, email, '1d');
-    const newToken = new RefreshToken({
-        email: email,
-        refreshToken: newRefreshToken,
-        accessToken: newAccessToken
-    });
+        const newAccessToken = createJwtToken(user.fname, user.lname, user.email, user._id, '10s');
+        const newRefreshToken = createJwtToken(user.fname, user.lname, user.email, user._id, '1d');
 
-    // Save the new refresh token to the database
-    await newToken.save();
+        const newRecord = new RefreshToken({
+            user: user._id,
+            refreshToken: newRefreshToken,
+            sessionId: tokenRecord.sessionId,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent'),
+            lastUsedAt: Date.now()
+        });
+        await newRecord.save();
 
-    // Set HTTP-only cookies for the new refresh token
-    resp.cookie('refreshToken', newRefreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true, sameSite: 'Lax' });
 
-    // Respond with the new access token
-    return resp.status(200).json({ accessToken: newAccessToken });
+        resp.cookie('refreshToken', newRefreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true, sameSite: 'Lax' });
+
+        return resp.status(200).json({ accessToken: newAccessToken });
+
+    } catch (error) {
+        console.error("Error during token refresh:", error);
+        resp.clearCookie('refreshToken');
+        // resp.clearCookie('sessionId');
+        resp.clearCookie('X-CSRF-Token');
+        return resp.status(500).json({ message: "Token refresh failed. Please login again.", error });
+    }
 });
 
 

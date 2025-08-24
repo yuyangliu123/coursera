@@ -1,0 +1,1 @@
+import{r as t,j as r}from"./index-BgPfMftx.js";const s=t.createContext(),n=({children:e})=>{const[o,a]=t.useState(null);return r.jsx(s.Provider,{value:{modalState:o,setModalState:a},children:e})};export{s as G,n as a};

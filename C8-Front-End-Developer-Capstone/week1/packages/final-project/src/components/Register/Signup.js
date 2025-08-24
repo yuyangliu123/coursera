@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext, lazy } from "react";
 import {
   Flex,
   Heading,
@@ -23,6 +23,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useCapslock } from "../provider/CheckCapslock";
 import axios from "axios";
+import { GlobalContext } from "../provider/GlobalModalContext";
+const LoginRotate = lazy(() => import("../Register/LoginRotate"))
+import { Modal, ModalButton, ModalContent, useModal } from "../provider/ModalsSystem.js";
 
 
 
@@ -31,7 +34,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const capslockState = useCapslock();
-
+  const { replaceContent } = useModal();
   //--------------------------------------------------------------------------------------------------//
   // Define Validation Rules
   const schema = yup.object().shape({
@@ -57,7 +60,7 @@ const Signup = () => {
   const confirm = watch("confirm")
   //--------------------------------------------------------------------------------------------------//
   const toast = useToast();
-    //--------------------------------------------------------------------------------------------------//
+  //--------------------------------------------------------------------------------------------------//
   // use useEffect & useRef to deal with autofill not trigger onChange problem
   const fnameRef = useRef();
   const lnameRef = useRef();
@@ -82,42 +85,55 @@ const Signup = () => {
   //Submit form
   const onSubmit = async (data) => {
     try {
-      let result = await axios.post("http://localhost:5000/signup/register",data);
-      if (result.status === 400) {
-        setServerError(await result.text());
-      } else {
-        if (result) {
-          console.log(result);
-          toast({
-            title: "Sign Up Success",
-            description: "You will soon be redirected",
-            status: "success",
-            duration: 2000,
-          });
-          reset();
-          setTimeout(() => {
-            window.location.href = "./loginrotate";//After singup success, relocate to login page
-          }, 2000)
-        }
-      }
+      const result = await axios.post("http://localhost:5000/signup/register", data);
+      // Success case
+      console.log(result);
+      toast({
+        title: "Sign Up Success",
+        description: "",
+        status: "success",
+        duration: 2000,
+      });
+      reset();
+      // setTimeout(() => {
+      //   window.location.href = "./";
+      // }, 2000);
+      setTimeout(() => {
+        replaceContent(<LoginRotate />)
+      }, 2000);
+
     } catch (error) {
       console.error("Error:", error);
+      // Check if it's a response error from the server
+      if (error.response) {
+        const errorMessage = error.response.data || "An error occurred during sign up";
+        toast({
+          title: "Sign Up Error",
+          description: errorMessage,
+          status: "error",
+          duration: 2000,
+        });
+      } else {
+        // Network or other errors
+        toast({
+          title: "Sign Up Error",
+          description: "An unexpected error occurred. Please try again.",
+          status: "error",
+          duration: 2000,
+        });
+      }
     }
   };
+
 
   //--------------------------------------------------------------------------------------------------//
 
 
   const handleShowClick = () => setShowPassword(!showPassword);
+
+  const { setModalState } = useContext(GlobalContext);
   return (
-    <Flex
-      flexDirection="column"
-      width="100wh"
-      height="100vh"
-      backgroundColor="gray.200"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <>
       <Stack
         direction="column"
         marginBottom="2"
@@ -171,12 +187,18 @@ const Signup = () => {
                   </InputGroup>
                 </FormControl>
               </HStack>
-              {errors.password && <p>{errors.password.message}</p>}
-              {!errors.password && errors.confirm && <p>{errors.confirm.message}</p>}
-              {capslockState ? <p>Caps Lock is active!</p> : null}
-              <Checkbox size="sm" isChecked={showPassword} onChange={handleShowClick}>
-                {showPassword ? "Hide Password" : "Show Password"}
-              </Checkbox>
+              <HStack width="100%" justifyContent="space-between" textStyle="StyledText" fontSize="1rem" color="#000000">
+                <Box>
+                  {errors.password && <p>{errors.password.message}</p>}
+                  {!errors.password && errors.confirm && <p>{errors.confirm.message}</p>}
+                  {capslockState ? <p>Caps Lock is active!</p> : null}
+                </Box>
+                <Box justifyContent="end">
+                  <Checkbox size="sm" isChecked={showPassword} onChange={handleShowClick}>
+                    {showPassword ? "Hide Password" : "Show Password"}
+                  </Checkbox>
+                </Box>
+              </HStack>
               <Button
                 borderRadius={0}
                 type="submit"
@@ -191,12 +213,16 @@ const Signup = () => {
         </Box>
       </Stack>
       <Box>
-        Already have an account? {" "}
-        <Link color="teal.500" href="/loginrotate">
-          Login
-        </Link>
+        <HStack width="fit-content" margin="auto">
+          <Box>
+            Already have an account? {" "}
+          </Box>
+          <ModalButton color="teal.500" nest targetContent={<LoginRotate />}>
+            Login
+          </ModalButton>
+        </HStack>
       </Box>
-    </Flex>
+    </>
   )
 }
 

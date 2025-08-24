@@ -3,12 +3,13 @@
 const express = require('express');
 const authenticate = require("./middleware/authenticate")
 const cookieParser = require('cookie-parser');
-const mongoose = require('mongoose');
+const mongoose = require('./db');
 const { RefreshToken } = require('./model/models');
 const logout = express();
 const cors = require("cors");
 console.log("App listen at port 5000");
 const { jwtDecode } = require('jwt-decode');
+const authenticateAccessToken = require('./middleware/authenticateAccessToken');
 
 logout.use(express.json());
 logout.use(cors());
@@ -32,24 +33,30 @@ logout.get("/", (req, resp) => {
 // This route handler processes user logout requests for the '/logout' path.
 
 // Route handler for creating a new token
-logout.post('/logout',authenticate, async (req, resp) => {
-	await RefreshToken.deleteOne({ email: req.body.email })
-	await resp.clearCookie("refreshToken")
-	// Send the request body back as a response.
-	if (!await RefreshToken.findOne({ email: req.body.email })) {
-		resp.status(200).json("Delete complete");
-	} else {
-		resp.status(400).json("Cannot delete user at database");
-	}
-})
-//--------------------------------------------------------------------------------------------------//
-mongoose.connect('mongodb://localhost:27017/', {
-	dbName: 'little-lemon',
-	useNewUrlParser: true,
-	useUnifiedTopology: true
-}).then(() => {
-	console.log('Connected to little-lemon database');
-}).catch((err) => {
-	console.log(err);
+logout.post('/logout', authenticateAccessToken, async (req, resp) => {
+    // 獲取當前會話的 refreshToken 和 sessionId
+    const refreshTokenCookie = req.cookies.refreshToken;
+    const currentSessionId = req.cookies.sessionId;
+
+    try {
+        // 刪除當前會話的 RefreshToken 記錄
+        await RefreshToken.deleteOne({
+            user: req.user._id,
+            refreshToken: refreshTokenCookie,
+            sessionId: currentSessionId
+        });
+
+        // 清除客戶端所有相關 Cookie
+        resp.clearCookie('refreshToken');
+        // resp.clearCookie('sessionId');
+        resp.clearCookie('X-CSRF-Token');
+
+        return resp.status(200).json({ message: 'Logged out successfully.' });
+    } catch (error) {
+        console.error("Error during logout:", error);
+        return resp.status(500).json({ message: "Logout failed." });
+    }
 });
+//--------------------------------------------------------------------------------------------------//
+
 module.exports = logout;

@@ -19,7 +19,7 @@ import {
   Text,
   HStack
 } from "@chakra-ui/react";
-import { Route } from 'react-router-dom';
+import { Route, useNavigate } from 'react-router-dom';
 
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -78,6 +78,7 @@ const ResetPassword = () => {
   const password = watch("password")
   const confirm = watch("confirm")
   const toast = useToast()
+  const navigate=useNavigate()
   //--------------------------------------------------------------------------------------------------//
 
 
@@ -96,7 +97,7 @@ const ResetPassword = () => {
           });
           //redirect to login page
           setTimeout(() => {
-            window.location.href = "/loginrotate"
+            window.location.href = "/"
           }, 2000);
         } else if (result.status === 402) {
           toast({
@@ -199,7 +200,7 @@ const ResetPassword = () => {
             alignItems="center"
           >
             <Heading color="teal.400">Reset your password</Heading>
-            <Text color="teal.400">{"Enter your email address and we’ll"}<br />{"send you a link to reset your password"}</Text>
+            <Text color="teal.400">{"Please enter new password"}</Text>
             <Box minW={{ base: "90%", md: "468px" }}>
               <form onSubmit={handleSubmit(onSubmit)}>
                 <Stack

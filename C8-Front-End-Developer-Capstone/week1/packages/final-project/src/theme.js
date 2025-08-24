@@ -44,6 +44,15 @@ const theme = extendTheme({
       letterSpacing: '-2%',
       color:"#FFFFFF"
     },
+    StyledErrorMessage: {
+      // you can also use responsive styles
+      fontFamily: `'Karla', serif`,
+      fontSize:"1rem",
+      fontWeight: 500,
+      lineHeight: '110%',
+      letterSpacing: '-2%',
+      color:"#ff0000"
+    },
     StyledButton:{
       baseStyle:{
         color:"#000000",

@@ -1,0 +1,1 @@
+import{d as r,e as s}from"./chunk-3Y4YXCR2-D1_PzN3D.js";import{c as a}from"./chunk-DMO4EI7P-ffbJSNvT.js";import{r as n}from"./index-BgPfMftx.js";function u(t){const{theme:o}=a(),e=r();return n.useMemo(()=>s(o.direction,{...e,...t}),[t,o.direction,e])}export{u};
