@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext, lazy } from "react";
 import {
   Flex,
   Heading,
@@ -12,6 +12,7 @@ import {
   useToast,
   Box,
   Link,
+  HStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -20,20 +21,45 @@ import { useCapslock } from "../provider/CheckCapslock";
 import axios from 'axios'
 import Cookies from 'js-cookie';
 import { v4 as uuidv4 } from 'uuid';
+import { ModalContext } from "../provider/ModalContext";
+import useClickOutside from "../provider/useClickOutside";
+import { SmallCloseIcon } from "@chakra-ui/icons";
+// import ModalPage from "../provider/ModalPage";
+import { GlobalContext } from "../provider/GlobalModalContext";
+import { Modal, ModalButton, ModalContent, useModal } from "../provider/ModalsSystem.js";
+import { useNavigate } from "react-router-dom";
+import { useUserRotate, useToken } from "../provider/JwtTokenRotate.js";
+// const Signup = lazy(() => import("../Register/Signup"))
+// const ForgotPassword = lazy(() => import("../Register/ForgotPassword"))
+import Signup from "./Signup.js"
+import ForgotPassword from "./ForgotPassword.js"
+import { useLocation } from "react-router-dom";
 
 
 
 
-
-const LoginRotate = () => {
+const LoginRotate = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const { lname, email, availableAccessToken, accessToken, isEmail } = useUserRotate();
+  const { updateToken } = useToken();
+  const { closeModal } = useModal()
   const capslockState = useCapslock();
+  const navigate = useNavigate()
+  const location = useLocation();
+  const { modalOpen, setModalOpen, setLoadSignup, setLoadForgotPass } = useContext(ModalContext);
   // Define Validation Rules
   const schema = yup.object().shape({
     email: yup.string().required("Please enter your email"),
     password: yup.string().required("Please enter your password"),
   });
+  //////here///////////// modalOpen時點input會讓"../provider/ModalContext" document.body.style.overflow = modalOpen ? "hidden" : "unset"失效
+
+  useEffect(() => {
+    console.log(availableAccessToken, "availableAccessToken test");
+
+  }, [availableAccessToken])
+
 
 
   const {
@@ -83,6 +109,7 @@ const LoginRotate = () => {
           "Content-Type": "application/json",
         },
       });
+
       if (result.status === 200) {
         const response = result.data;
         //set at & rt to local storage
@@ -96,9 +123,26 @@ const LoginRotate = () => {
           status: "success",
           duration: 2000,
         });
-        setTimeout(() => {
-          window.location.href = "./" //After singup success, relocate to login page
-        }, 2000)
+
+        const latestUserState = await updateToken(); // Get the latest state returned by updateToken
+        closeModal()
+        console.log(latestUserState.availableAccessToken, latestUserState, "availableAccessToken test1"); // Use the returned value here
+
+        ///////here//////////////////////////////////////////////////////
+        if (onLoginSuccess) {
+          onLoginSuccess({ token: response.accessToken });
+
+        } else {
+          // setTimeout(() => {
+          //   if(location.pathname!=="/"){
+          //   navigate("/") //After signup success, relocate to login page
+
+          //   }
+
+          //   console.log(availableAccessToken, "availableAccessToken test2");
+          // }, 2000)
+        }
+
       } else if (result.status === 400) {
         setServerError(result.statusText);
         toast({
@@ -109,19 +153,22 @@ const LoginRotate = () => {
         });
       }
     } catch (error) {
-      console.error("Error:", error);
+      const errorMessage = error.response?.data?.message || "Login Failed";
+      setServerError(errorMessage);
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        status: "error",
+        duration: 2000,
+      });
+      console.log("Error:", error);
     }
   };
 
+  const { setModalState } = useContext(GlobalContext);
+
   return (
-    <Flex
-      flexDirection="column"
-      width="100wh"
-      height="100vh"
-      backgroundColor="gray.200"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <>
       <Stack
         direction="column"
         marginBottom="2"
@@ -155,14 +202,31 @@ const LoginRotate = () => {
                     </Button>
                   </InputRightElement>
                 </InputGroup>
-                {errors.password && <p>{errors.password.message}</p>}
-                {serverError && <p>{serverError}</p>}
-                {capslockState && <p>Caps Lock is active!</p>}
-                <Stack direction="row" width="100%" justifyContent="end">
-                  <FormHelperText>
-                    <Link href="/forgotpassword">forgot password?</Link>
-                  </FormHelperText>
-                </Stack>
+                <HStack width="100%" justifyContent="space-between" textStyle="StyledText" fontSize="1rem" color="#000000">
+                  <Box>
+                    {errors.password && <p>{errors.password.message}</p>}
+                    {serverError && <p>{serverError}</p>}
+                    {capslockState && <p>Caps Lock is active!</p>}
+                  </Box>
+                  <Box justifyContent="end">
+                    <FormHelperText>
+                      {/* <Link
+                        onClick={() => {
+                          setTimeout(() => {
+                            setModalState("forgot")
+                            setLoadForgotPass(true)
+                          }, 0);
+                        }}>
+                        forgot password?
+                      </Link> */}
+                      <ModalButton nest targetContent={<ForgotPassword />}>
+                        forgot password?
+                      </ModalButton>
+                    </FormHelperText>
+                  </Box>
+
+
+                </HStack>
               </FormControl>
               <Button
                 borderRadius={0}
@@ -178,12 +242,28 @@ const LoginRotate = () => {
         </Box>
       </Stack>
       <Box>
-        New to us?{" "}
-        <Link color="teal.500" href="/signup">
-          Sign Up
-        </Link>
+        <HStack width="fit-content" margin="auto">
+          <Box>
+            New to us?{" "}
+          </Box>
+
+          {/* //here */}
+          {/* <Link
+            color="teal.500"
+            onClick={() => {
+              setTimeout(() => {
+                setModalState("signup")
+                setLoadSignup(true)
+              }, 0);
+            }}>
+            Sign Up
+          </Link> */}
+          <ModalButton color="teal.500" nest targetContent={<Signup />}>
+            Signup
+          </ModalButton>
+        </HStack>
       </Box>
-    </Flex>
+    </>
   );
 };
 

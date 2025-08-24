@@ -1,15 +1,6 @@
 //--------------------------------------------------------------------------------------------------//
 // To connect with mongoDB database
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/', {
-	dbName: 'little-lemon',
-	useNewUrlParser: true,
-	useUnifiedTopology: true
-}).then(() => {
-	console.log('Connected to little-lemon database');
-}).catch((err) => {
-	console.log(err);
-});
+const mongoose = require('./db');
 
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
@@ -41,7 +32,7 @@ signup.post("/register", async (req, resp) => {
 	  const existingUser = await User.findOne({ email: req.body.email });
 	  if (existingUser) {
 		// If the user already exists, send an error message.
-		return resp.status(400).send('User with this email already exists');
+		return resp.status(401).send('User with this email already exists');
 	  }
 
 	  // Hash the password

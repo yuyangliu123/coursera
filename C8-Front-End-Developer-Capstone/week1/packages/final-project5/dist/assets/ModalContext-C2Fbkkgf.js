@@ -1,0 +1,1 @@
+import{r as t,j as r}from"./index-BgPfMftx.js";const a=t.createContext(),d=({children:o})=>{const[e,s]=t.useState(!1);return document.body.style.overflow=e?"hidden":"unset",r.jsx(a.Provider,{value:{modalOpen:e,setModalOpen:s},children:o})};export{a as M,d as a};

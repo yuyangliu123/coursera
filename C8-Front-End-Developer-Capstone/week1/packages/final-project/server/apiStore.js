@@ -1,21 +1,16 @@
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/', {
-	dbName: 'little-lemon',
-}).then(() => {
+mongoose.connect('mongodb://localhost:27017,localhost:27018,localhost:27019/little-lemon?replicaSet=rs0'
+).then(() => {
 	console.log('Connected to little-lemon database');
 }).catch((err) => {
 	console.log(err);
 });
-//--------------------------------------------------------------------------------------------------//
-
-//--------------------------------------------------------------------------------------------------//
 
 
-//--------------------------------------------------------------------------------------------------//
 // For backend and express
 const express = require('express');
-const https=require("https")
-const fs=require("fs")
+const https = require("https")
+const fs = require("fs")
 const api = express();
 const cors = require("cors");
 const { Meal } = require('./model/models');
@@ -37,84 +32,89 @@ api.get("/", (req, resp) => {
 // This route handler processes user registration requests for the '/register' path.
 const getHttpsData = (url) => {
 	return new Promise((resolve, reject) => {
-	  https.get(url, (resp) => {
-		let data = '';
-		resp.on('data', (chunk) => {
-		  data += chunk;
-		});
-		resp.on('end', () => {
-		  resolve(JSON.parse(data));
-		});
-		resp.on('error', (err) => {
-		  reject(err);
-		});
-	  });
-	});
-  };
-  const createData=async()=>{
-	try {
-	const categoriesResponse = await getHttpsData('https://www.themealdb.com/api/json/v1/1/list.php?c=list');
-	let categoriesData = {};
-	for (let category of categoriesResponse.meals) {
-	  const strCategory = category.strCategory;
-	  const mealsData = await getHttpsData(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${strCategory}`);
-	  categoriesData[strCategory] = mealsData.meals;
-	}
-	Object.entries(categoriesData).map(([category, meals])=>{
-		meals.forEach(mealData => {
-			let meal = new Meal({
-				category:category,
-				strMeal: mealData.strMeal,
-				strMealThumb: mealData.strMealThumb,
-				idMeal: mealData.idMeal,
-				price: parseFloat((Number(mealData.idMeal)/10000+Math.random()*10).toFixed(2))
+		https.get(url, (resp) => {
+			let data = '';
+			resp.on('data', (chunk) => {
+				data += chunk;
 			});
-			meal.save();
+			resp.on('end', () => {
+				resolve(JSON.parse(data));
+			});
+			resp.on('error', (err) => {
+				reject(err);
+			});
 		});
-	})
-  } catch (err) {
-	console.log("Error: " + err.message);
-  }
-}
-
-(async()=>{
-	const count = await Meal.countDocuments();
-	if (count === 0) {
-		createData();
-	  }
-	})();
-
-
-
-	const updateData = async () => {
-		try {
-		  const categoriesResponse = await getHttpsData('https://www.themealdb.com/api/json/v1/1/list.php?c=list');
-		  let categoriesData = {};
-		  for (let category of categoriesResponse.meals) {
+	});
+};
+const createData = async () => {
+	try {
+		const categoriesResponse = await getHttpsData('https://www.themealdb.com/api/json/v1/1/list.php?c=list');
+		let categoriesData = {};
+		for (let category of categoriesResponse.meals) {
 			const strCategory = category.strCategory;
 			const mealsData = await getHttpsData(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${strCategory}`);
 			categoriesData[strCategory] = mealsData.meals;
-		  }
-		  Object.entries(categoriesData).map(([category, meals]) => {
-			meals.forEach(async mealData => {
-			  const { strMeal, strMealThumb, idMeal } = mealData;
-			  const price = parseFloat((Number(idMeal)/10000+Math.random()*10).toFixed(2));
-			  await Meal.findOneAndUpdate(
-				{ idMeal },
-				{
-					$set: { category, strMeal, strMealThumb, idMeal },
-					$setOnInsert: { price }
-				},
-				{ upsert: true }
-			  );
-			});
-		  });
-		} catch (err) {
-		  console.log("Error: " + err.message);
 		}
-	};
-	  // Run the update function every hour
-	  setInterval(updateData, 60*60*1000);
+		Object.entries(categoriesData).map(([category, meals]) => {
+			meals.forEach(mealData => {
+				let meal = new Meal({
+					category: category,
+					strMeal: mealData.strMeal,
+					strMealThumb: mealData.strMealThumb,
+					idMeal: mealData.idMeal,
+					price: Number((Number(mealData.idMeal) / 10000 + Math.random() * 10).toFixed(2))
+				});
+				meal.save();
+			});
+		})
+	} catch (err) {
+		console.log("Error: " + err.message);
+	}
+}
+
+(async () => {
+	const count = await Meal.countDocuments();
+	if (count === 0) {
+		createData();
+	}
+})();
+
+
+
+const updateData = async () => {
+	try {
+		const categoriesResponse = await getHttpsData('https://www.themealdb.com/api/json/v1/1/list.php?c=list');
+		let categoriesData = {};
+		for (let category of categoriesResponse.meals) {
+			const strCategory = category.strCategory;
+			const mealsData = await getHttpsData(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${strCategory}`);
+			categoriesData[strCategory] = mealsData.meals;
+		}
+		Object.entries(categoriesData).map(([category, meals]) => {
+			meals.forEach(async mealData => {
+				const { strMeal, strMealThumb, idMeal } = mealData;
+				const price = Number((Number(idMeal) / 10000 + Math.random() * 10).toFixed(2));
+				await Meal.findOneAndUpdate(
+					{ idMeal },
+					{
+						$set: { category, strMeal, strMealThumb, idMeal },
+						$setOnInsert: { price }
+					},
+					{ upsert: true }
+				);
+			});
+		});
+	} catch (err) {
+		console.log("Error: " + err.message);
+	}
+};
+// Run the update function every hour
+setInterval(updateData, 60 * 60 * 1000);
+
+
+api.listen(5001, () => {
+	console.log(`API server is running on http://localhost:5001`);
+})
 
 //--------------------------------------------------------------------------------------------------//
 

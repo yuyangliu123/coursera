@@ -1,33 +1,29 @@
 import { useEffect } from 'react';
 
-// Custom hook to detect clicks outside of specified elements
 const useClickOutside = (refs, callback) => {
-  // Ensure refs is an array
-  const allRefs = Array.isArray(refs) ? refs : [refs];
-
-  // Function to handle click events
   const handleClickOutside = (event) => {
-    let isOutside = true; // Initialize isOutside as true
+    setTimeout(() => {
+      const refsArray = Array.isArray(refs) ? refs : Object.values(refs.current || refs);
 
-    // Check if the click event occurred inside any of the refs
-    allRefs.forEach(ref => {
-      if (ref.current && ref.current.contains(event.target)) {
-        isOutside = false; // If click is inside, set isOutside to false
+      const isOutside = refsArray.every(ref => {
+        if (!ref || !ref.current) {
+          return true;
+        }
+        return !ref.current.contains(event.target);
+      });
+
+      if (isOutside) {
+        callback();
       }
-    });
-
-    // If the click event occurred outside all refs, invoke the callback
-    if (isOutside) {
-      callback();
-    }
-  };
+    }, 0);
+  }
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [allRefs]);
+  }, [refs, callback]);
 };
 
 export default useClickOutside;

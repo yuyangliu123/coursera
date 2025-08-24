@@ -1,0 +1,1 @@
+import{j as s}from"./index-BgPfMftx.js";import{I as a}from"./chunk-QINAG4RG-CS9ezQ7p.js";const c=({src:e,imgWidth:o,auto:r})=>`http://localhost:5000/img?url=${encodeURIComponent(e)}&w=${o}&auto=${r}`,p=({src:e,imgWidth:o,auto:r,...t})=>{const n=c({src:e,imgWidth:o,auto:r});return s.jsx(a,{src:n,...t})};export{p as I,c as g};

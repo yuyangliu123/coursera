@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Image, Stack, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Image, Skeleton, Stack, Text, VStack } from "@chakra-ui/react";
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MealContext } from "../provider/MealContext";
@@ -8,15 +8,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as farFaHeart } from '@fortawesome/free-regular-svg-icons';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import { openDB } from 'idb';
-import {axiosInstance} from '../provider/axiosInstanceWithTokenCheck';
+import { apiClient } from '../provider/axiosInstanceWithTokenCheck';
 import Cookies from 'js-cookie';
-import {axiosInstanceWithTokenCheck} from "../provider/axiosInstanceWithTokenCheck";
+import LazyLoadImage from "../provider/LazyLoadImage";
 
 const LIKE_QUERY = gql`
-query Likeitemnumber($email: String!) {
-  likeitemnumber(email: $email) {
+query Likeitemnumber($identifier: String!, $isEmail: Boolean) {
+  likeitemnumber(identifier: $identifier,isEmail:$isEmail) {
     likeItem {
-      strMeal
+      idMeal
     }
   }
 }
@@ -44,23 +44,27 @@ const updateDB = async (newData) => {
 
 const FoodPage2 = () => {
     const [data, setData] = useState();
-    const { strMeal } = useParams();
+    const params = useParams();
+    console.log("完整的params对象:", params);
+
+    // 从URL中提取idMeal（根据你的实际URL结构调整）
+    const { strMeal, idMeal } = useParams();
     const decodedMeal = decodeURIComponent(strMeal);
+
     const [numMeal, setNumMeal] = useState(1);
     const [price, setPrice] = useState();
     const { cartItem, setCartItem } = useContext(MealContext);
-    const { email, isUser, accessToken } = useUserRotate();
+    const { identifier, isEmail, accessToken } = useUserRotate();
     const [isLike, setIsLike] = useState(false);
-
     const { loading, error, data: likeData, refetch } = useQuery(LIKE_QUERY,
         {
-            variables: { email },
+            variables: { identifier, isEmail },
             fetchPolicy: 'network-only',
             //if user not login, then useQuery would not be trigger
-            skip: !email,
+            skip: !identifier,
             onCompleted: (data) => {
                 const likeItem = data.likeitemnumber.flatMap(cart => cart.likeItem);
-                const isLiked = likeItem.some(item => item.strMeal === decodedMeal);
+                const isLiked = likeItem.some(item => item.idMeal === idMeal);
                 setIsLike(isLiked);
             },
             onError: (error) => {
@@ -71,25 +75,25 @@ const FoodPage2 = () => {
 
 
     // load isLiked state when not login
-    useEffect(() => {
-        if (!isUser) {
-            const loadLikeData = async () => {
-                const db = await initDB();
-                let existingCart = await db.get('cart', 'cartData');
-                if (existingCart && existingCart.likeItem) {
-                    const isLiked = existingCart.likeItem.some(item => item.strMeal === decodedMeal);
-                    setIsLike(isLiked);
-                }
-            };
-            loadLikeData();
-        }
-    }, [decodedMeal, isUser]);
+    // useEffect(() => {
+    //     if (!isEmail) {
+    //         const loadLikeData = async () => {
+    //             const db = await initDB();
+    //             let existingCart = await db.get('cart', 'cartData');
+    //             if (existingCart && existingCart.likeItem) {
+    //                 const isLiked = existingCart.likeItem.some(item => item.strMeal === decodedMeal);
+    //                 setIsLike(isLiked);
+    //             }
+    //         };
+    //         loadLikeData();
+    //     }
+    // }, [idMeal, isEmail]);
 
     //load meal info
     useEffect(() => {
         (async () => {
-            if (decodedMeal) {
-                await fetch(`http://localhost:5000/api/foodPage/${decodedMeal}`)
+            if (idMeal) {
+                await fetch(`http://localhost:5000/api/foodPage/${idMeal}`)
                     .then(response => response.json())
                     .then(data => {
                         setData(prevMeal => ({ ...prevMeal, ...data }));
@@ -98,7 +102,67 @@ const FoodPage2 = () => {
                     .catch(err => console.log(err));
             }
         })();
-    }, [strMeal]);
+    }, [idMeal]);
+
+    // const handleLike = async () => {
+    //     const newIsLike = !isLike;
+
+    //     const newLikeItem = {
+    //         strMeal: data.strMeal,
+    //         idMeal: data.idMeal,
+    //         baseAmount: data.price,
+    //         strMealThumb: data.strMealThumb,
+    //         _id: data.idMeal
+    //     };
+    //     //if user not login, then handleLike would not be trigger
+    //     if (!isEmail) {
+    //         console.log("User is not logged in. Saving order locally.");
+
+    //         // save to indexedDB
+    //         const db = await initDB();
+    //         let existingCart = await db.get('cart', 'cartData');
+
+    //         if (existingCart) {
+    //             if (newIsLike === true) {
+    //                 existingCart.likeItem.push(newLikeItem);
+    //             } else {
+    //                 existingCart.likeItem = existingCart.likeItem.filter(item => item.idMeal !== newLikeItem.idMeal)
+    //             }
+    //         } else {
+    //             // Create new cart data
+    //             existingCart = {
+    //                 isEmail: isEmail,
+    //                 totalAmount: price,
+    //                 totalItem: numMeal,
+    //                 data: [],
+    //                 likeItem: [newLikeItem]
+    //             };
+    //         }
+
+    //         await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
+    //         setIsLike(newIsLike)
+    //         return;
+    //     }
+
+
+    //     try {
+    //         let result = await apiClient.post("http://localhost:5000/shoppingcart/update",
+    //             {
+    //                 event: "like",
+    //                 likeState: newIsLike ? "like" : "none",
+    //                 meal: data.strMeal,
+    //                 idMeal: data.idMeal,
+    //                 price: data.price,
+    //                 strMealThumb: data.strMealThumb,
+    //             });
+    //         if (result.status === 200) {
+    //             setIsLike(newIsLike);
+    //             refetch();
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // };
 
     const handleLike = async () => {
         const newIsLike = !isLike;
@@ -111,38 +175,10 @@ const FoodPage2 = () => {
             _id: data.idMeal
         };
         //if user not login, then handleLike would not be trigger
-        if (!isUser) {
-            console.log("User is not logged in. Saving order locally.");
-
-            // save to indexedDB
-            const db = await initDB();
-            let existingCart = await db.get('cart', 'cartData');
-
-            if (existingCart) {
-                if (newIsLike === true) {
-                    existingCart.likeItem.push(newLikeItem);
-                } else {
-                    existingCart.likeItem = existingCart.likeItem.filter(item => item.idMeal !== newLikeItem.idMeal)
-                }
-            } else {
-                // Create new cart data
-                existingCart = {
-                    isUser: isUser,
-                    totalAmount: price,
-                    totalItem: numMeal,
-                    data: [],
-                    likeItem: [newLikeItem]
-                };
-            }
-
-            await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
-            setIsLike(newIsLike)
-            return;
-        }
 
 
         try {
-            let result = await (await axiosInstanceWithTokenCheck()).post("http://localhost:5000/api/update",
+            let result = await apiClient.post("http://localhost:5000/shoppingcart/update",
                 {
                     event: "like",
                     likeState: newIsLike ? "like" : "none",
@@ -166,7 +202,7 @@ const FoodPage2 = () => {
             numMeal: numMeal,
             idMeal: data.idMeal,
             price: price,
-            strMealThumb: data.strMealThumb
+            strMealThumb: data.strMealThumb,
         };
         const newOrderItem = {
             strMeal: data.strMeal,
@@ -178,81 +214,76 @@ const FoodPage2 = () => {
             _id: data.idMeal // assuming idMeal is unique and used as the key
         };
 
-
-        if (!isUser) {
-            console.log("User is not logged in. Saving order locally.");
-
-            // save data to IndexedDB
-            const db = await initDB();
-            let existingCart = await db.get('cart', 'cartData');
-
-            if (existingCart) {
-                // Update existing cart data
-                existingCart.totalAmount += price;
-                existingCart.totalAmount = parseFloat(existingCart.totalAmount.toFixed(2))
-                existingCart.totalItem += numMeal;
-
-                const existingItemIndex = existingCart.data.findIndex(item => item.idMeal === newOrderItem.idMeal);
-                if (existingItemIndex !== -1) {
-                    existingCart.data[existingItemIndex].numMeal += numMeal;
-                    existingCart.data[existingItemIndex].cartAmount += price;
-                } else {
-                    existingCart.data.push(newOrderItem);
-                }
-            } else {
-                // Create new cart data
-                existingCart = {
-                    isUser: isUser,
-                    totalAmount: price,
-                    totalItem: numMeal,
-                    data: [newOrderItem],
-                    likeItem: []
-                };
+        try {
+            let result = await apiClient.post("http://localhost:5000/shoppingcart/addToCart", orderData);
+            if (result.status === 200) {
+                setCartItem(currentCartItem => currentCartItem + numMeal);
             }
-
-            await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
-            setCartItem(currentCartItem => currentCartItem + numMeal);
-            return;
-        } else {
-            try {
-                let result = await(await axiosInstanceWithTokenCheck()).post("http://localhost:5000/api/addToCart", orderData);
-                if (result.status === 200) {
-                    setCartItem(currentCartItem => currentCartItem + numMeal);
-                }
-            } catch (err) {
-                console.log(err);
-            }
-
+        } catch (err) {
+            console.log(err);
         }
+        // if (!isEmail) {
+        //     console.log("User is not logged in. Saving order locally.");
+
+        //     // save data to IndexedDB
+        //     const db = await initDB();
+        //     let existingCart = await db.get('cart', 'cartData');
+
+        //     if (existingCart) {
+        //         // Update existing cart data
+        //         existingCart.totalAmount += price;
+        //         existingCart.totalAmount = Number(existingCart.totalAmount.toFixed(2))
+        //         existingCart.totalItem += numMeal;
+
+        //         const existingItemIndex = existingCart.data.findIndex(item => item.idMeal === newOrderItem.idMeal);
+        //         if (existingItemIndex !== -1) {
+        //             existingCart.data[existingItemIndex].numMeal += numMeal;
+        //             existingCart.data[existingItemIndex].cartAmount += price;
+        //         } else {
+        //             existingCart.data.push(newOrderItem);
+        //         }
+        //     } else {
+        //         // Create new cart data
+        //         existingCart = {
+        //             isEmail: isEmail,
+        //             totalAmount: price,
+        //             totalItem: numMeal,
+        //             data: [newOrderItem],
+        //             likeItem: []
+        //         };
+        //     }
+
+        //     await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
+        //     setCartItem(currentCartItem => currentCartItem + numMeal);
+        //     return;
+        // } else {
+        //     try {
+        //         let result = await apiClient.post("http://localhost:5000/shoppingcart/addToCart", orderData);
+        //         if (result.status === 200) {
+        //             setCartItem(currentCartItem => currentCartItem + numMeal);
+        //         }
+        //     } catch (err) {
+        //         console.log(err);
+        //     }
+
+        // }
     };
 
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
-
-    if (data) {
+    if (loading) {
         return (
             <>
                 <VStack w="100%" align="start" padding="100px 0" id="menu">
-                    <Stack w="100%" justifyContent="space-between" marginBottom="50px" direction={{ base: "column", lg: "row" }}>
-                        <VStack width="50%">
-                            <Box as="h3" textStyle="StyledH2" color="#333333">{data.strMeal}</Box>
-                            <Image src={data.strMealThumb} alt={data.strMeal} boxSize="100%"></Image>
-                            <HStack>
-                                <Button onClick={() => {
-                                    let newNumMeal = numMeal - 1;
-                                    let newPrice = parseFloat((newNumMeal * data.price).toFixed(2));
-                                    setNumMeal(newNumMeal);
-                                    setPrice(newPrice);
-                                }}>-</Button>
+                    <Stack w="100%" justifyContent={{ base: "none", lg: "space-between" }} marginBottom="50px" direction={{ base: "column", lg: "row" }}>
+                        <VStack width={{ base: "100%", lg: "50%" }}>
+                            <Skeleton width="50%" height="30px" />
+                            <Skeleton width="100%" height="600px" />
+
+                            <HStack width={{ md: "50%", base: "80%" }}>
+                                <Button>-</Button>
                                 <Box>{numMeal}</Box>
-                                <Button onClick={() => {
-                                    let newNumMeal = numMeal + 1;
-                                    let newPrice = parseFloat((newNumMeal * data.price).toFixed(2));
-                                    setNumMeal(newNumMeal);
-                                    setPrice(newPrice);
-                                }}>+</Button>
-                                <Box>Total Price: {Number(price)}</Box>
-                                <Button onClick={() => onOrder()}>Order!</Button>
+                                <Button>+</Button>
+                                <Box width="100%"><Skeleton width="100%" height="24px" /></Box>
+                                <Button>Order</Button>
                                 <FontAwesomeIcon
                                     icon={isLike ? faHeart : farFaHeart}
                                     size="xl"
@@ -267,7 +298,72 @@ const FoodPage2 = () => {
                                 />
                             </HStack>
                         </VStack>
-                        <Box width="40%">
+                        <Box width={{ base: "100%", lg: "40%" }}>
+                            <Box as="h3" fontSize="3em">
+                                Description
+                            </Box>
+                            <Box>
+                                {[...Array(10)].map((_, index) => (<Skeleton width="100%" height="24px" margin="1%" />))}
+                            </Box>
+                        </Box>
+                    </Stack>
+                </VStack>
+            </>
+        );
+    }
+    if (error) return <p>Error: {error.message}</p>;
+
+    if (data) {
+        return (
+            <>
+                <VStack w="100%" align="start" padding="100px 0" id="menu">
+                    <Stack w="100%" justifyContent={{ base: "none", lg: "space-between" }} marginBottom="50px" direction={{ base: "column", lg: "row" }}>
+                        <VStack width={{ base: "100%", lg: "50%" }}>
+                            <Box as="h3" textStyle="StyledH2" color="#333333">{data.strMeal}</Box>
+                            <Box width="100%" height="600px">
+                                {/* <Image src={data.strMealThumb} alt={data.strMeal} boxSize="100%"></Image> */}
+                                <LazyLoadImage
+                                    src={data.strMealThumb}
+                                    alt={data.strMeal}
+                                    width="100%"
+                                    imgWidth="600"
+                                    auto="webp"
+                                    height="600px"
+                                    objectFit="cover"
+                                />
+                            </Box>
+
+                            <HStack width="50%">
+                                <Button onClick={() => {
+                                    let newNumMeal = numMeal - 1;
+                                    let newPrice = Number((newNumMeal * data.price).toFixed(2));
+                                    setNumMeal(newNumMeal);
+                                    setPrice(newPrice);
+                                }}>-</Button>
+                                <Box>{numMeal}</Box>
+                                <Button onClick={() => {
+                                    let newNumMeal = numMeal + 1;
+                                    let newPrice = Number((newNumMeal * data.price).toFixed(2));
+                                    setNumMeal(newNumMeal);
+                                    setPrice(newPrice);
+                                }}>+</Button>
+                                <Box width="100%">Total Price: {Number(price)}</Box>
+                                <Button onClick={() => onOrder()}>Order</Button>
+                                <FontAwesomeIcon
+                                    icon={isLike ? faHeart : farFaHeart}
+                                    size="xl"
+                                    style={{
+                                        color: "#ff0000",
+                                        transition: "transform 0.3s ease-in-out",
+                                        transform: isLike ? "scale(1.3)" : "scale(1)"
+                                    }}
+                                    onClick={() => {
+                                        handleLike();
+                                    }}
+                                />
+                            </HStack>
+                        </VStack>
+                        <Box width={{ base: "100%", lg: "40%" }}>
                             <Box as="h3" fontSize="3em">
                                 Description
                             </Box>

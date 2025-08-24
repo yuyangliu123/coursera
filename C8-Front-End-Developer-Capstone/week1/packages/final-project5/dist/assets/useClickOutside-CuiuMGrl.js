@@ -1,0 +1,1 @@
+import{r as c}from"./index-BgPfMftx.js";const a=(e,o)=>{const t=Array.isArray(e)?e:[e],r=u=>{let s=!0;t.forEach(n=>{n.current&&n.current.contains(u.target)&&(s=!1)}),s&&o()};c.useEffect(()=>(document.addEventListener("mousedown",r),()=>{document.removeEventListener("mousedown",r)}),[t])};export{a as u};

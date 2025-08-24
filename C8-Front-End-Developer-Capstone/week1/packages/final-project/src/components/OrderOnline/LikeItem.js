@@ -1,34 +1,22 @@
 import { gql, useQuery, useMutation } from '@apollo/client';
 import { Box, Button, HStack, Image, Stack, Table, Tbody, Td, Text, Th, Thead, Tr, VStack } from '@chakra-ui/react';
 import { useUserRotate } from '../provider/JwtTokenRotate';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { MealContext } from '../provider/MealContext';
 import { SmallCloseIcon } from "@chakra-ui/icons";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from '@fortawesome/free-regular-svg-icons';
 import { openDB } from 'idb';
-const LIKELIST_QUERY = gql`
-query Likeitemlist($email: String) {
-  likeitemlist(email: $email) {
-    likeItem {
-      idMeal
-      strMeal
-      baseAmount
-      strMealThumb
-    }
-  }
-}
-`;
+import LazyLoadImage from '../provider/LazyLoadImage';
+import useBreakpoint from '../provider/useBreakpoint';
+
 
 const UPDATE_QUERY = gql`
-mutation Updatelikelist($email: String, $idMeal: String, $baseAmount: Float, $state: String) {
-  updatelikelist(email: $email, idMeal: $idMeal, baseAmount:$baseAmount, state: $state) {
+mutation Updatelikelist($identifier: String!, $isEmail: Boolean, $idMeal: String, $baseAmount: Float, $state: String) {
+  updatelikelist(identifier: $identifier,isEmail:$isEmail, idMeal: $idMeal, baseAmount:$baseAmount, state: $state) {
     likeItem {
-      strMeal
       idMeal
-      baseAmount
-      strMealThumb
     }
   }
 }
@@ -54,33 +42,43 @@ const updateDB = async (newData) => {
   await tx.done;
 };
 
-const LikeItem = () => {
-  const { email, isUser } = useUserRotate();
+const LikeItem = ({ initialData, loading, error, fetchlike, imageWidth }) => {
+  const { identifier, isEmail } = useUserRotate();
   const { cartItem, setCartItem } = useContext(MealContext);
-  const [cartData, setCartData] = useState(null);
-  const { data: cart, loading, error, refetch: fetchlike } = useQuery(LIKELIST_QUERY, {
-    variables: { email },
-    fetchPolicy: 'network-only',
-    skip: !email || !isUser,
-    //load cart item when login
-    //onCompleted broken, only work when first load
-    onCompleted: (data) => {
-      setCartData(data.likeitemlist[0]);
-    },
-    onError: (error) => {
-      console.log(error);
-    }
-  });
+  const [cartData, setCartData] = useState(initialData);
+  // const { data: cart, loading, error, refetch: fetchlike } = useQuery(LIKELIST_QUERY, {
+  //   variables: { email },
+  //   fetchPolicy: 'network-only',
+  //   skip: !email || !isEmail,
+  //   //load cart item when login
+  //   //onCompleted broken, only work when first load
+  //   onCompleted: (data) => {
+  //     setCartData(data.likeitemlist[0]);
+  //   },
+  //   onError: (error) => {
+  //     console.log(error);
+  //   }
+  // });
   const [likeupdate] = useMutation(UPDATE_QUERY, {
     //use onCompleted to prevent Race Condition
     //use then() to set cartData
     onCompleted: () => {
       fetchlike().then((data) => {
-        setCartData(data.data.likeitemlist[0]);
+        setCartData(data.data.likeitemlist);
       })
     }
   })
 
+  useEffect(() => {
+    console.log(cartData, "cartdata");
+
+  }, [cartData])
+
+  // useEffect(() => {
+  //   if (initialData) {
+  //     setCartData(initialData);
+  //   }
+  // }, [initialData]);
 
   const updateLikeState = async ({ state, baseAmount, idMeal }) => {
     const db = await initDB();
@@ -101,7 +99,7 @@ const LikeItem = () => {
           }
           existingCart.totalItem += 1;
           existingCart.totalAmount += baseAmount;
-          existingCart.totalAmount = parseFloat(existingCart.totalAmount.toFixed(2))
+          existingCart.totalAmount = Number(existingCart.totalAmount.toFixed(2))
           existingCart.likeItem = existingCart.likeItem.filter(item => item.idMeal !== idMeal);
         }
       } else if (state === "delete") {
@@ -116,9 +114,9 @@ const LikeItem = () => {
 
 
 
-  // //load cart item when not login
+  //load cart item when not login
   // useEffect(() => {
-  //   if (!isUser) {
+  //   if (!isEmail) {
   //     const loadCart = async () => {
   //       const db = await initDB();
   //       let existingCart = await db.get('cart', 'cartData');
@@ -128,7 +126,7 @@ const LikeItem = () => {
   //     };
   //     loadCart();
   //   }
-  // }, [isUser,cartData]);
+  // }, [isEmail, cartData]);
 
 
   if (loading) {
@@ -137,14 +135,17 @@ const LikeItem = () => {
     return <Box>Error Occurred</Box>;
   }
 
-  if (!cartData) {
-    return <Box>No data</Box>;
+  if (!cartData || cartData.length === 0) {
+    return <Box width="100%"><Box textStyle="StyledH2" color="#000000" margin="0 auto" width="fit-content">No Like Item In Your List</Box></Box>
   }
 
+  // const iw=useMemo(()=>({
+  //   "width":imageWidth
+  // }),[imageWidth])
   return (
     <Stack direction={{ xxl: "row", base: "column" }} width="100%" alignItems="flex-start" spacing={6}>
       <Box width="100%" display="grid" gridTemplateColumns={{ xl: "repeat(4, 1fr)", lg: "repeat(3, 1fr)", md: "repeat(2, 1fr)", base: "repeat(1, 1fr)" }} gap="10px" height="fit-content">
-        {cartData.likeItem.map((item, index) => (
+        {cartData?.map((item, index) => (
           <VStack
             key={item.idMeal}
             width="100%"
@@ -157,12 +158,21 @@ const LikeItem = () => {
             <Link
               to={`/order2/${item.strMeal}`}
             >
-              <Image
+              {/* <Image
                 src={item.strMealThumb}
                 alt={item.strMeal}
                 width="auto"
                 height="auto"
-                objectFit="cover" />
+                objectFit="cover" /> */}
+              <LazyLoadImage
+                src={item.strMealThumb}
+                alt={item.strMeal}
+                width="auto"
+                imgWidth={imageWidth}
+                auto="webp"
+                height="auto"
+                objectFit="cover"
+              />
               <Box padding="1.25rem 1rem .75rem">
                 <Text
                   textStyle="StyledText"
@@ -191,11 +201,14 @@ const LikeItem = () => {
                 size="md"
                 //use async/await to prevent Race Condition
                 onClick={async () => {
-                  if (isUser) {
-                    await likeupdate({ variables: { email: email, idMeal: item.idMeal, baseAmount: item.baseAmount, state: "addtocart" } });
-                  } else {
-                    updateLikeState({ idMeal: item.idMeal, baseAmount: item.baseAmount, state: "addtocart" })
-                  }
+                  // if (isEmail) {
+                  //   await likeupdate({ variables: { email: email, idMeal: item.idMeal, baseAmount: item.baseAmount, state: "addtocart" } });
+                  // } else {
+                  //   updateLikeState({ idMeal: item.idMeal, baseAmount: item.baseAmount, state: "addtocart" })
+                  // }
+
+                  await likeupdate({ variables: { identifier: identifier, isEmail: isEmail, idMeal: item.idMeal, baseAmount: item.baseAmount, state: "addtocart" } });
+
                   await setCartItem(cartItem + 1)
                 }}
               >
@@ -208,11 +221,13 @@ const LikeItem = () => {
                 backgroundColor="#e5e5e5"
                 size="md"
                 onClick={async () => {
-                  if (isUser) {
-                    likeupdate({ variables: { email: email, idMeal: item.idMeal, state: "delete" } });
-                  } else {
-                    updateLikeState({ idMeal: item.idMeal, state: "delete" })
-                  }
+                  // if (isEmail) {
+                  //   likeupdate({ variables: { email: email, idMeal: item.idMeal, state: "delete" } });
+                  // } else {
+                  //   updateLikeState({ idMeal: item.idMeal, state: "delete" })
+                  // }
+                  await likeupdate({ variables: { identifier: identifier, isEmail: isEmail, idMeal: item.idMeal, baseAmount: item.baseAmount, state: "delete" } });
+
                 }}
               >
                 <HStack justifyContent="space-between" width="100%">
