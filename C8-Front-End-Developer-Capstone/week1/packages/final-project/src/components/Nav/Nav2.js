@@ -23,28 +23,6 @@ import navConfig from "./config/navConfig.js";
 //Then, when the result of one of the queries returns, Apollo will pass the result to all components using that query. 
 //For example, the following two queries:
 
-// const CART_ITEM_QUERY = gql`
-// query Shoppingcarts($email: String) {
-//   shoppingcarts(email: $email) {
-//     totalItem
-//   }
-// }
-// `
-
-// const CART_QUERY = gql`
-// query Shoppingcarts($email: String) {
-//     shoppingcarts(email: $email) {
-//       totalItem
-//       data {
-//         strMealThumb
-//         strMeal
-//         numMeal
-//         baseAmount
-//       }
-//       totalAmount
-//     }
-//   }
-// `
 
 // This can cause query merging or query interference, which means that when querying CART_ITEM_QUERY, 
 // it may also return the result of CART_QUERY.

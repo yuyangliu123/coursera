@@ -5,9 +5,6 @@ import { v4 as uuidv4 } from "uuid"
 import Cookies from "js-cookie"
 import theme from './theme';
 import FullScreenSection from './components/FullScreenSection';
-import ScrollToTop from './components/provider/ScrollToTop';
-// import OrderOnlineSkeleton from './components/OrderOnline/OrderOnlineSkeleton';
-// import LikeItemSkeleton from './components/OrderOnline/LikeItemSkeleton';
 import LikeItemContainer from './components/OrderOnline/LikeItemContainer';
 import OrderOnline2 from './components/OrderOnline/OrderOnline2';
 import { background, Box, ChakraProvider, Image, Spinner, VStack } from '@chakra-ui/react';
@@ -16,14 +13,10 @@ import StickyNav from './components/provider/StickyNav';
 import globalConfig from './components/globalConfig';
 import LoadingLogo from './LoadingLogo';
 import GlobalProvider from './GlobalProvider';
-// import CheckoutPageContainer from './components/CheckoutPage/CheckoutPageContainer';
-// import AccountContainer from './components/Account/AccountContainer';
-// import OrderDetail from './components/Account/OrderDetail';
 
 const Home = lazy(() => import('./components/Home/Home'));
 const Nav2 = lazy(() => import('./components/Nav/Nav2'));
 const MobileNav = lazy(() => import('./components/Nav/MobileNav'));
-// const GlobalProvider = lazy(() => import('./GlobalProvider'));
 const GlobalModal = lazy(() => import('./components/provider/GlobalModal'));
 const CheckoutPageContainer = lazy(() => import('./components/CheckoutPage/CheckoutPageContainer'));
 const AccountContainer = lazy(() => import('./components/Account/AccountContainer'));
@@ -45,29 +38,7 @@ const Footer = lazy(() => import('./components/Home/Footer'));
 const CartPage = lazy(() => import('./components/OrderOnline/CartPage/CartPage'));
 const LikeItem = lazy(() => import('./components/OrderOnline/LikeItem'));
 const CartPageContainer = lazy(() => import('./components/OrderOnline/CartPage/CartPageContainer'))
-// const MyPage = lazy(() => import('./components/OrderOnline/MyPage'))
-// import BookingForm from './components/Booking/BookingForm';
 
-// import Signup from './components/Register/Signup';
-// import { CapslockProvider } from './components/provider/CheckCapslock';
-
-// import ForgotPassword from './components/Register/ForgotPassword';
-// import ResetPassword from './components/Register/ResetPassword';
-
-// import FoodPage2 from './components/OrderOnline/FoodPage2';
-// import OrderOnlineContainer from './components/OrderOnline/OrderOnlineContainer';
-// // const OrderOnlineContainer = lazy(() => import('./components/OrderOnline/OrderOnlineContainer'));
-
-// import Footer from './components/Home/Footer';
-// import CartPage from './components/OrderOnline/CartPage';
-// import LikeItem from './components/OrderOnline/LikeItem';
-// import CheckoutPage from './components/OrderOnline/CheckoutPage';
-
-
-// const client = new ApolloClient({
-//   uri: 'http://localhost:5000/graphql',
-//   cache: new InMemoryCache()
-// });
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const location = useLocation()
@@ -202,7 +173,6 @@ function App() {
                 <MobileNav />
               </FullScreenSection>
             </StickyNav>
-            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/reservation" element={<BookingForm />} />

@@ -104,65 +104,6 @@ const FoodPage2 = () => {
         })();
     }, [idMeal]);
 
-    // const handleLike = async () => {
-    //     const newIsLike = !isLike;
-
-    //     const newLikeItem = {
-    //         strMeal: data.strMeal,
-    //         idMeal: data.idMeal,
-    //         baseAmount: data.price,
-    //         strMealThumb: data.strMealThumb,
-    //         _id: data.idMeal
-    //     };
-    //     //if user not login, then handleLike would not be trigger
-    //     if (!isEmail) {
-    //         console.log("User is not logged in. Saving order locally.");
-
-    //         // save to indexedDB
-    //         const db = await initDB();
-    //         let existingCart = await db.get('cart', 'cartData');
-
-    //         if (existingCart) {
-    //             if (newIsLike === true) {
-    //                 existingCart.likeItem.push(newLikeItem);
-    //             } else {
-    //                 existingCart.likeItem = existingCart.likeItem.filter(item => item.idMeal !== newLikeItem.idMeal)
-    //             }
-    //         } else {
-    //             // Create new cart data
-    //             existingCart = {
-    //                 isEmail: isEmail,
-    //                 totalAmount: price,
-    //                 totalItem: numMeal,
-    //                 data: [],
-    //                 likeItem: [newLikeItem]
-    //             };
-    //         }
-
-    //         await updateDB(Object.assign(existingCart, { idMeal: 'cartData' }));
-    //         setIsLike(newIsLike)
-    //         return;
-    //     }
-
-
-    //     try {
-    //         let result = await apiClient.post("http://localhost:5000/shoppingcart/update",
-    //             {
-    //                 event: "like",
-    //                 likeState: newIsLike ? "like" : "none",
-    //                 meal: data.strMeal,
-    //                 idMeal: data.idMeal,
-    //                 price: data.price,
-    //                 strMealThumb: data.strMealThumb,
-    //             });
-    //         if (result.status === 200) {
-    //             setIsLike(newIsLike);
-    //             refetch();
-    //         }
-    //     } catch (error) {
-    //         console.log(error);
-    //     }
-    // };
 
     const handleLike = async () => {
         const newIsLike = !isLike;
@@ -178,7 +119,7 @@ const FoodPage2 = () => {
 
 
         try {
-            let result = await apiClient.post("http://localhost:5000/shoppingcart/update",
+            let result = await apiClient.post("http://localhost:5000/shoppingcart/like",
                 {
                     event: "like",
                     likeState: newIsLike ? "like" : "none",

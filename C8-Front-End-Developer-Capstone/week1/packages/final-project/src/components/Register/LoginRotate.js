@@ -103,7 +103,7 @@ const LoginRotate = ({ onLoginSuccess }) => {
       const requestBody = {
         ...data,
       };
-      const result = await axios.post("http://localhost:5000/login2/login2", requestBody, {
+      const result = await axios.post("http://localhost:5000/login/login", requestBody, {
         withCredentials: true, // Allow credentials (cookies, authorization headers, etc.)
         headers: {
           "Content-Type": "application/json",

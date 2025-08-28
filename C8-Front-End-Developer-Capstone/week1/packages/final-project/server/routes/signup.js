@@ -10,7 +10,7 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const { string } = require('yup');
-const { User } = require('./model/models');
+const { User } = require('../model/models');
 console.log("App listen at port 5000");
 signup.use(express.json());
 signup.use(cors());

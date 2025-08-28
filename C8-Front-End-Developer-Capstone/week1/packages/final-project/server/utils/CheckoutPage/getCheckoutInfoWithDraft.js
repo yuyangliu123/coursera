@@ -1,4 +1,4 @@
-const { default: mongoose } = require("../../db");
+const { default: mongoose } = require("../../routes/db");
 const { ShoppingCart, CheckoutDraft } = require("../../model/models");
 
 

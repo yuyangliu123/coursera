@@ -11,8 +11,7 @@ const cors = require("cors");
 const { string } = require('yup');
 console.log("App listen at port 5000");
 const { jwtDecode } = require('jwt-decode');
-const { Reservation } = require('./model/models');
-const authenticate = require('./middleware/authenticate');
+const { Reservation } = require('../model/models');
 app.use(express.json());
 app.use(cors());
 

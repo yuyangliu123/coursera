@@ -59,7 +59,7 @@ workbox.routing.registerRoute(
   new workbox.strategies.NetworkFirst()
 );
 
-const networkFetch=['http://localhost:5000/reservation/',"http://localhost:5000/login2/"]
+const networkFetch=['http://localhost:5000/reservation/',"http://localhost:5000/login/"]
 
 workbox.routing.registerRoute(
   ({ url, request }) => {

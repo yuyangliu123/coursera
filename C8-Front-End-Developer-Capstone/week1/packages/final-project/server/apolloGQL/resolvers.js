@@ -1,7 +1,6 @@
 const { ShoppingCart, Order, Meal, User } = require("../model/models");
 const { getCheckoutInfo } = require("../utils/CheckoutPage/getCheckoutInfo");
 const { getCheckoutInfoWithDraft } = require("../utils/CheckoutPage/getCheckoutInfoWithDraft");
-const { getCompletedShoppingCart } = require("../utils/getCompletedShoppingCart");
 const { getLikeItemData } = require("../utils/getLikeItemData");
 const { getShoppingCart } = require("../utils/getShoppingCart");
 
@@ -16,11 +15,10 @@ const resolvers = {
 
         const result = await getShoppingCart(identifier, isEmail)
 
-        console.log("合并后的结果:", result);
+        console.log("合併後的結果:", result);
         return [result];
 
       } catch (error) {
-        console.error("获取购物车数据出错:", error);
         throw new ApolloError("Failed to fetch shopping cart: " + error.message);
       }
     },
@@ -48,24 +46,6 @@ const resolvers = {
         ? await ShoppingCart.find({ email: identifier })
         : await ShoppingCart.find({ sessionId: identifier })
     },
-    cartpageformat: async (_, { identifier, isEmail }, { user }) => {
-      try {
-        // 验证用户是否登录
-        // if (!user) {
-        //   throw new AuthenticationError('You must be logged in');
-        // }
-
-        // const result=await getCompletedShoppingCart({email})
-        const result = await getShoppingCart(identifier, isEmail)
-
-        console.log("合并后的结果:", result);
-        return [result];
-
-      } catch (error) {
-        console.error("获取购物车数据出错:", error);
-        throw new ApolloError("Failed to fetch shopping cart: " + error.message);
-      }
-    },
     likeitemlist: async (_, { identifier, isEmail }, { user }) => {
       const result = await getLikeItemData({ identifier, isEmail })
       return result;
@@ -82,7 +62,7 @@ const resolvers = {
       // }
       return await Order.find({ email: identifier, orderUuid: uuid })
     },
-    checkoutpageformat: async (_, { identifier, isEmail, state, useDraft,sessionId }, { user }) => {
+    checkoutpageformat: async (_, { identifier, isEmail, state, useDraft, sessionId }, { user }) => {
 
       try {
         const user = await User.findOne({ email: identifier });
@@ -177,13 +157,6 @@ const resolvers = {
           case "proposal":
             const shoppingCart = useDraft ? await getCheckoutInfoWithDraft(sessionId) : await getCheckoutInfo(identifier)
 
-            console.log("getCheckoutInfoStart", shoppingCart, "getCheckoutInfo", shoppingCart.fee, sortShippingInfo(user.shippingInfo));
-
-            // return [{
-            //   ...shoppingCart,  // 展開 shoppingCart 的所有屬性
-            //   fee:shoppingCart.fee,
-            //   shippingInfo: sortShippingInfo(user.shippingInfo),
-            // }];
             return {
               cart: shoppingCart,
               shippingInfo: sortShippingInfo(user.shippingInfo),
@@ -199,26 +172,10 @@ const resolvers = {
           updatedAddress: updatedAddress
         });
       } catch (error) {
-        console.error("获取购物车数据出错:", error);
+        console.error("獲取購物車數據錯誤:", error);
         throw new ApolloError("Failed to fetch shopping cart: " + error.message);
       }
 
-      // try {
-      //   // 验证用户是否登录
-      //   // if (!user) {
-      //   //   throw new AuthenticationError('You must be logged in');
-      //   // }
-
-      //   // const result=await getCompletedShoppingCart({email})
-      //   const result = await getShoppingCart(identifier, isEmail)
-
-      //   console.log("checkoutpageformat合并后的结果:", result);
-      //   return [result];
-
-      // } catch (error) {
-      //   console.error("获取购物车数据出错:", error);
-      //   throw new ApolloError("Failed to fetch shopping cart: " + error.message);
-      // }
     },
   },
   Mutation: {
@@ -226,7 +183,6 @@ const resolvers = {
       let shoppingcart = isEmail
         ? await ShoppingCart.findOne({ email: identifier })
         : await ShoppingCart.findOne({ sessionId: identifier })
-      console.log(isEmail, identifier, "updatelikelist");
 
       if (!shoppingcart) {
         throw new Error("Shopping cart not found");
@@ -262,7 +218,6 @@ const resolvers = {
       }
 
       await shoppingcart.save();
-      console.log(shoppingcart.likeItem, "shoppingcart.likeItem");
 
       return {
         ...shoppingcart.toObject()

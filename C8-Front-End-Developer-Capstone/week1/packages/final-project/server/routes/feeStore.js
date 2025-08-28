@@ -13,9 +13,9 @@ const https = require("https")
 const fs = require("fs")
 const api = express();
 const cors = require("cors");
-const { Fee } = require('./model/models');
+const { Fee } = require('../model/models');
 const { string } = require('yup');
-const feeConfig = require('./config/feeConfig');
+const feeConfig = require('../config/feeConfig');
 console.log("App listen at port 5000");
 api.use(express.json());
 api.use(cors());

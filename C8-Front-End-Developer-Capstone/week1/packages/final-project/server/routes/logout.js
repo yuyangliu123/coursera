@@ -1,15 +1,15 @@
 //--------------------------------------------------------------------------------------------------//
 // For backend and express
 const express = require('express');
-const authenticate = require("./middleware/authenticate")
+
 const cookieParser = require('cookie-parser');
 const mongoose = require('./db');
-const { RefreshToken } = require('./model/models');
+const { RefreshToken } = require('../model/models');
 const logout = express();
 const cors = require("cors");
 console.log("App listen at port 5000");
 const { jwtDecode } = require('jwt-decode');
-const authenticateAccessToken = require('./middleware/authenticateAccessToken');
+const authenticateAccessToken = require('../middleware/authenticateAccessToken');
 
 logout.use(express.json());
 logout.use(cors());

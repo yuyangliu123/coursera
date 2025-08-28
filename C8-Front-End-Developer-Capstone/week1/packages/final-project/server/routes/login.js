@@ -5,7 +5,7 @@ const mongoose = require('./db');
 // For backend and express
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const login2 = express();
+const login = express();
 const cors = require("cors");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
@@ -14,21 +14,20 @@ require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
 const { jwtDecode } = require('jwt-decode');
-const { RefreshToken, User } = require('./model/models');
-const authenticate = require('./middleware/authenticate');
-const requireRefreshToken = require('./middleware/requireRefreshToken');
+const { RefreshToken, User } = require('../model/models');
+const requireRefreshToken = require('../middleware/requireRefreshToken');
 
 console.log("App listen at port 5000");
-login2.use(express.json());
+login.use(express.json());
 
 //set sign of cookie
-login2.use(cookieParser())
+login.use(cookieParser())
 const corsOptions = {
     origin: 'http://localhost:3000', // Change to frontend's URL
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
-login2.use(cors(corsOptions));
-login2.get("/", (req, resp) => {
+login.use(cors(corsOptions));
+login.get("/", (req, resp) => {
 
     resp.send("App is Working");
     // Can check backend is working or not by
@@ -48,8 +47,8 @@ const createJwtToken = (fname, lname, email, _id, expiresIn) => {
     return token;
 };
 
-// This route handler processes user login requests for the '/login2' path.
-login2.post("/login2", async (req, resp) => {
+// This route handler processes user login requests for the '/login' path.
+login.post("/login", async (req, resp) => {
     const { email, password } = req.body;
     try {
         // Find a user instance with the email from the request body.
@@ -120,10 +119,10 @@ login2.post("/login2", async (req, resp) => {
     }
 });
 
-// This route handler processes user login requests for the '/login2' path.
+// This route handler processes user login requests for the '/login' path.
 
 //here
-login2.post('/check-refresh-token', requireRefreshToken, async (req, resp) => {
+login.post('/check-refresh-token', requireRefreshToken, async (req, resp) => {
 
     const { user, tokenRecord } = req; // 從 req 獲取用戶和舊的 RefreshToken 記錄
 
@@ -159,4 +158,4 @@ login2.post('/check-refresh-token', requireRefreshToken, async (req, resp) => {
 
 
 
-module.exports = login2;
+module.exports = login;

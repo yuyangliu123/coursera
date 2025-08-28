@@ -13,19 +13,17 @@ const { ApolloServer } = require('apollo-server-express');
 const { resolvers } = require("./apolloGQL/resolvers");
 const { typeDefs } = require("./apolloGQL/models/typeDefs");
 
-const reservationRouter = require("./reservation")
-const signupRouter = require("./signup")
-const login2Router = require("./login2")
-const logoutRouter = require("./logout")
-const forgotpasswordRouter = require("./forgotpassword")
+const reservationRouter = require("./routes/reservation")
+const signupRouter = require("./routes/signup")
+const loginRouter = require("./routes/login")
+const logoutRouter = require("./routes/logout")
+const forgotpasswordRouter = require("./routes/forgotpassword")
 // const authRouter = require("./routes/auth")
-const apiRouter = require("./api")
-const shoppingcartRouter = require("./shoppingcart")
+const apiRouter = require("./routes/api")
+const shoppingcartRouter = require("./routes/shoppingcart")
 const session = require('express-session');
-const lightAuthenticate = require('./middleware/lightAuthenticate');
-const authenticate = require('./middleware/authenticate');
-const imgConverterRouter = require("./imgConverter")
-const checkoutRouter = require("./checkout")
+const imgConverterRouter = require("./routes/imgConverter")
+const checkoutRouter = require("./routes/checkout")
 // --- 引入拆分後的驗證 Middleware ---
 const authenticateAccessToken = require('./middleware/authenticateAccessToken'); // 確保路徑正確
 const validateCsrfToken = require('./middleware/validateCsrfToken');       // 確保路徑正確
@@ -124,7 +122,7 @@ app.use((req, res, next) => {
 // 定義不需要身份驗證或 CSRF 驗證的公共路由或特殊路由
 const publicRoutes = [
     '/signup',
-    '/login2', // 登入路由，它自己處理認證
+    '/login', // 登入路由，它自己處理認證
     '/forgotpassword',
     "/api", //here should split addtocart from /api router
     "/img",
@@ -183,7 +181,7 @@ app.use((req, res, next) => {
 // --- 路由定義 (保持不變，但移除它們內部重複的 middleware) ---
 app.use("/reservation", reservationRouter);
 app.use('/signup', signupRouter);
-app.use('/login2', login2Router);
+app.use('/login', loginRouter);
 app.use('/logout', logoutRouter);
 app.use('/forgotpassword', forgotpasswordRouter);
 // app.use("/auth", authRouter)

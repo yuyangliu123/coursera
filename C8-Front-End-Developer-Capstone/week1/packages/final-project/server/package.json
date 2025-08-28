@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "start-mongodb": "node setupReplicaSet.js",
-    "init-databases": "concurrently \"nodemon  apiStore.js\" \"nodemon  feeStore.js\"",
-    "start-server": "concurrently \"nodemon apiStore.js\" \"nodemon  feeStore.js\" \"nodemon  server.js\"",
-    "dev": "concurrently \"nodemon  apiStore.js\" \"nodemon  feeStore.js\" \"nodemon  server.js\"",
-    "start": "concurrently \"node  apiStore.js\" \"node  feeStore.js\" \"node  server.js\""
+    "start-mongodb": "node routes/setupReplicaSet.js",
+    "init-databases": "concurrently \"nodemon  routes/apiStore.js\" \"nodemon  routes/feeStore.js\"",
+    "start-server": "concurrently \"nodemon routes/apiStore.js\" \"nodemon  routes/feeStore.js\" \"nodemon  server.js\"",
+    "dev": "concurrently \"nodemon  routes/apiStore.js\" \"nodemon  routes/feeStore.js\" \"nodemon  server.js\"",
+    "start": "concurrently \"node  routes/apiStore.js\" \"node routes/feeStore.js\" \"node  server.js\""
   }
 }

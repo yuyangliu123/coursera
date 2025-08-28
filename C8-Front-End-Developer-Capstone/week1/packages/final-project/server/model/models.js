@@ -1,5 +1,5 @@
 // models.js
-const mongoose = require('../db');
+const mongoose = require('../routes/db');
 const { v4: uuidv4 } = require('uuid');
 const ReserveSchema = new mongoose.Schema({
 	fname: {

@@ -8,8 +8,7 @@ require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
 const { jwtDecode } = require('jwt-decode');
-const { RefreshToken, User } = require('./model/models');
-const authenticate = require('./middleware/authenticate');
+const { RefreshToken, User } = require('../model/models');
 console.log("App listen at port 5000");
 
 const corsOptions = {
