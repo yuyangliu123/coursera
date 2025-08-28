@@ -9,21 +9,17 @@ const https = require("https")
 const fs = require("fs")
 const shoppingcart = express();
 const cors = require("cors");
-const { User, RefreshToken, Meal, ShoppingCart } = require('./model/models');
+const { User, RefreshToken, Meal, ShoppingCart } = require('../model/models');
 const { jwtDecode } = require('jwt-decode');
 
 const { string } = require('yup');
-const authenticate = require('./middleware/authenticate');
 const redis = require('redis');
 const { promisify } = require('util');
 const { log } = require('console');
-const { getCompletedShoppingCart } = require('./utils/getCompletedShoppingCart');
-const { updateCartCheckedState } = require('./utils/updateCartCheckedState');
-const { updateCartItem } = require('./utils/updateCartItem');
-const { updateCartState } = require('./utils/updateCartState');
-const { getInitialUserInfo } = require('./utils/getInitialUserInfo');
-const { findInitialShoppingCart } = require('./utils/findInitialShoppingCart');
-const { unAuthMergeCart } = require('./utils/unAuthMergeCart');
+const { updateCartState } = require('../utils/updateCartState');
+const { getInitialUserInfo } = require('../utils/getInitialUserInfo');
+const { findInitialShoppingCart } = require('../utils/findInitialShoppingCart');
+const { unAuthMergeCart } = require('../utils/unAuthMergeCart');
 
 // 创建Redis客户端
 const redisClient = redis.createClient({
@@ -142,58 +138,6 @@ shoppingcart.post("/addToCart", async (req, res) => {
 	console.log(result);
 });
 
-// 新增shoppingcart端点处理check state的变更，保存到Redis
-//https://myapollo.com.tw/blog/interview-question-cache-patterns/
-
-//使用write through策略
-// shoppingcart.post("/updateCheckState", authenticate, async (req, res) => {
-// 	try {
-// 		// 1. 驗證授權和請求參數
-// 		const authHeader = req.headers['authorization'];
-// 		if (!authHeader) return res.status(401).send({ status: "error", message: "Authorization header missing" });
-
-// 		const accessToken = authHeader.split(' ')[1];
-// 		const email = jwtDecode(accessToken)?.email;
-// 		if (!email) return res.status(401).send({ status: "error", message: "Invalid token" });
-
-// 		const { updatedItems } = req.body;
-// 		if (!updatedItems || !Array.isArray(updatedItems)) {
-// 			return res.status(400).send({ status: "error", message: "Invalid request body" });
-// 		}
-// 		const result = await updateCartCheckedState(email, updatedItems);
-// 		console.log(result, "result");
-// 		res.status(200).send({ status: "ok", result: result })
-// 	} catch (error) {
-// 		console.error("Error:", error);
-// 		res.status(500).send({ status: "error", message: error.message });
-// 	}
-// });
-
-
-// shoppingcart.post("/updateCartItem", authenticate, async (req, res) => {
-// 	try {
-// 		// 1. 驗證授權和請求參數
-// 		const authHeader = req.headers['authorization'];
-// 		if (!authHeader) return res.status(401).send({ status: "error", message: "Authorization header missing" });
-
-// 		const accessToken = authHeader.split(' ')[1];
-// 		const email = jwtDecode(accessToken)?.email;
-// 		if (!email) return res.status(401).send({ status: "error", message: "Invalid token" });
-
-// 		const { updatedItems } = req.body;
-// 		if (!updatedItems || !Array.isArray(updatedItems)) {
-// 			return res.status(400).send({ status: "error", message: "Invalid request body" });
-// 		}
-// 		const result = await updateCartItem(email, updatedItems);
-// 		console.log(result, "result", updatedItems, "updatedItems");
-// 		res.status(200).send({ status: "ok", result: result })
-// 	} catch (error) {
-// 		console.error("Error:", error);
-// 		res.status(500).send({ status: "error", message: error.message });
-// 	}
-// });
-
-//使用write through策略
 shoppingcart.post("/updateCart", async (req, res) => {
 	try {
 		const { identifier, isEmail } = await getInitialUserInfo(req)
@@ -228,15 +172,7 @@ shoppingcart.post("/mergeCart", async (req, res) => {
 		if (!authHeader) return res.status(401).send({ status: "error", message: "Authorization header missing" });
 
 		const sessionId = req.cookies.sessionId
-		//here/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// if (!updatedItems || !Array.isArray(updatedItems)) {
-		// 	return res.status(400).send({ status: "error", message: "Invalid request body" });
-		// }
-		// console.log(userInfo, "userInfo");
-		console.log(identifier, isEmail, sessionId, "identifier, isEmail,sessionId");
-
 		const result = await unAuthMergeCart(identifier, isEmail, sessionId);
-		console.log(result, "unAuthMergeCart");
 		setTimeout(() => {
 			if (req.aborted || res.writableEnded) {
 
@@ -252,86 +188,13 @@ shoppingcart.post("/mergeCart", async (req, res) => {
 	}
 });
 
-shoppingcart.post("/update", async (req, res) => {
-	// let identifier;
-	// let isEmail = false;
+shoppingcart.post("/like", async (req, res) => {
 
-	// if (req.user && req.user.email) {
-	// 	identifier = req.user.email;
-	// 	isEmail = true;
-	// 	console.log("Using email:", identifier);
-	// } else if (req.sessionId) {
-	// 	identifier = req.sessionId;
-	// 	isEmail = false;
-	// 	console.log("Using session ID:", identifier);
-	// } else {
-	// 	// 這應該在中間件中被捕獲，但為了安全起見還是加上
-	// 	return res.status(401).json('User not authenticated or session ID missing');
-	// }
 	const { identifier, isEmail } = await getInitialUserInfo(req)
-	console.log(identifier, isEmail, "identifier,isEmail");
-
-	// Check if there is cart data in the database
-	// let shoppingcart;
-	// if (isEmail) {
-	// 	shoppingcart = await ShoppingCart.findOne({ email: identifier });
-	// } else {
-	// 	shoppingcart = await ShoppingCart.findOne({ sessionId: identifier });
-	// }
-	// console.log('Request body:', req.body); // Add this line to log the request body
 
 	let shoppingcart = await findInitialShoppingCart(identifier, isEmail);
-	console.log(shoppingcart, "shopping");
 
-
-	if (req.body.event === "update") {
-		if (shoppingcart) {
-			// If the user has a shopping cart, find the meal
-			let cartItem = shoppingcart.data.find(item => item.idMeal === req.body.updatedItems.idMeal)
-			if (cartItem) {
-				// If the number of meals in the request is <= 0 (through the close button or modifying the input number)
-				if (req.body.updatedItems.numMeal <= 0) {
-					// Filter out the item with numMeal > 0
-					shoppingcart.data = shoppingcart.data.filter(item => item.idMeal !== req.body.updatedItems.idMeal);
-				} else {
-					// If the meal already exists in the shopping cart, update numMeal and cartAmount
-					cartItem.numMeal = req.body.updatedItems.numMeal;
-					cartItem.cartAmount = Number((cartItem.numMeal * cartItem.baseAmount).toFixed(2))
-				}
-			}
-			if ((shoppingcart.data.length === 0) && (shoppingcart.likeItem.length === 0)) {
-				// If shoppingcart.data is empty, delete the shopping cart
-				// if (isEmail) {
-				// 	await ShoppingCart.deleteOne({ email: identifier });
-				// } else {
-				// 	await ShoppingCart.deleteOne({ sessionId: identifier });
-				// }
-
-				await deleteShoppingCart(identifier, isEmail)
-				res.status(201).send({ status: "delete" });
-			} else {
-				// If shoppingcart.data is not empty, update cart and respond
-				// Calculate totalAmount
-				shoppingcart.totalAmount = shoppingcart.data.reduce((sum, item) => sum + item.cartAmount, 0);
-				shoppingcart.totalAmount = Number(shoppingcart.totalAmount.toFixed(2));
-
-				const checkedItem = shoppingcart.data.filter(item => item.checked === true)
-				// shoppingcart.checkedItem = checkedItem.length
-				shoppingcart.checkedItem = checkedItem.reduce((sum, item) => sum + item.numMeal, 0)
-				shoppingcart.checkedAmount = Number(checkedItem.reduce((sum, item) => sum + item.cartAmount, 0).toFixed(2))
-
-
-				// Calculate totalItem
-				shoppingcart.totalItem = shoppingcart.data.reduce((sum, item) => sum + item.numMeal, 0);
-				// Asynchronously save the shopping cart to the database.
-				let result = await shoppingcart.save();
-				// Convert the Mongoose document object to a plain JavaScript object.
-				result = result.toObject();
-				// Send the request body back as a response.
-				res.status(201).send({ result, status: "update" });
-			}
-		}
-	} else if (req.body.event === "like") {
+	if (req.body.event === "like") {
 		if (shoppingcart) {
 			if (req.body.likeState === "like") {
 				shoppingcart.likeItem.push({

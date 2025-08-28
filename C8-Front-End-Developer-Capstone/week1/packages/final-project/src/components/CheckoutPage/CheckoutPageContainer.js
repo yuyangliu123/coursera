@@ -5,7 +5,6 @@ import CheckoutPageSkeleton from "./CheckoutPageSkeleton.js"
 import { useUserRotate } from "../provider/JwtTokenRotate.js";
 import { ModalContext } from "../provider/ModalContext.js";
 import { useFormContext } from "react-hook-form";
-import { TransactionProvider } from "../provider/TransactionContext.js";
 import { useSearchParams } from "react-router-dom";
 import Cookies from 'js-cookie';
 
@@ -126,13 +125,5 @@ const CheckoutPageContainer = () => {
 };
 
 
-// const CheckoutPageReader = ({ dataResource }) => {
-//   const data = dataResource.read();
-//   return (
-//     <TransactionProvider>
-//       <CheckoutPage itemInfo={data.itemInfo} />
-//     </TransactionProvider>
-//   )
-// };
 
 export default CheckoutPageContainer;

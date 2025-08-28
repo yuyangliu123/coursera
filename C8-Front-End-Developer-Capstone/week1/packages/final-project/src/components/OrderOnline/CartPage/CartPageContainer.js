@@ -10,8 +10,8 @@ import { useCartPage } from "./CartPageContext.js";
 
 // 定義 GraphQL 查詢
 const CARTPAGE_QUERY = gql`
-    query CartPageformat($identifier: String!, $isEmail: Boolean) {
-    cartpageformat(identifier: $identifier,isEmail:$isEmail) {
+    query Shoppingcarts($identifier: String!, $isEmail: Boolean) {
+    shoppingcarts(identifier: $identifier,isEmail:$isEmail) {
         totalAmount
         totalItem
         checkedAmount
@@ -49,9 +49,9 @@ const CartPageContainer = () => {
     //onCompleted broken, only work when first load
     onCompleted: (data) => {
       setTimeout(() => {
-        setCartData(data.cartpageformat[0]);
+        setCartData(data.shoppingcarts[0]);
         const initialInput = {};
-        data.cartpageformat[0].data.forEach(item => {
+        data.shoppingcarts[0].data.forEach(item => {
           initialInput[item.strMeal] = item.numMeal;
         });
         setInitialInputValue(initialInput)

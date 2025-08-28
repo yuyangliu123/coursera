@@ -17,7 +17,7 @@ const nodemailer = require("nodemailer")
 require("dotenv").config()
 const SECRET_KEY = process.env.SECRET_KEY;
 const { string } = require('yup');
-const { Reset, User } = require('./model/models');
+const { Reset, User } = require('../model/models');
 console.log("App listen at port 5000");
 forgotpassword.use(express.json());
 forgotpassword.use(cors());

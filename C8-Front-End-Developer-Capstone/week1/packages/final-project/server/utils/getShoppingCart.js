@@ -1,4 +1,4 @@
-const { default: mongoose } = require("../db");
+const { default: mongoose } = require("../routes/db");
 const { ShoppingCart } = require("../model/models");
 
 const getShoppingCart = async (identifier, isEmail) => {

@@ -8,7 +8,6 @@ type Query {
   shoppingcarts(identifier: String, isEmail:Boolean): [ShoppingCart]
   cartitemnumber(identifier: String, isEmail:Boolean): [ShoppingCart]
   likeitemnumber(identifier: String, isEmail:Boolean): [ShoppingCart]
-  cartpageformat(identifier: String, isEmail:Boolean): [ShoppingCart]
   likeitemlist(identifier: String, isEmail:Boolean): [LikeItem]
   myorderinfo(identifier: String, isEmail:Boolean): [OrderData]
   orderdetail(identifier: String, isEmail:Boolean, uuid: String): [OrderData]

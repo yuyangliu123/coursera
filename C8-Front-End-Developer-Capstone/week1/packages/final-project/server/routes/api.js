@@ -9,22 +9,19 @@ const https = require("https")
 const fs = require("fs")
 const api = express();
 const cors = require("cors");
-const { User, RefreshToken, Meal, ShoppingCart } = require('./model/models');
+const { User, RefreshToken, Meal, ShoppingCart } = require('../model/models');
 const { jwtDecode } = require('jwt-decode');
 
 const { string } = require('yup');
-const authenticate = require('./middleware/authenticate');
+const authenticate = require('../middleware/authenticate');
 const redis = require('redis');
 const { promisify } = require('util');
 const { log } = require('console');
-const { getCompletedShoppingCart } = require('./utils/getCompletedShoppingCart');
-const { updateCartCheckedState } = require('./utils/updateCartCheckedState');
-const { updateCartItem } = require('./utils/updateCartItem');
-const { updateCartState } = require('./utils/updateCartState');
-const { getInitialUserInfo } = require('./utils/getInitialUserInfo');
-const { findInitialShoppingCart } = require('./utils/findInitialShoppingCart');
-const { unAuthMergeCart } = require('./utils/unAuthMergeCart');
-const semiAuth = require('./middleware/semiAuth');
+const { updateCartState } = require('../utils/updateCartState');
+const { getInitialUserInfo } = require('../utils/getInitialUserInfo');
+const { findInitialShoppingCart } = require('../utils/findInitialShoppingCart');
+const { unAuthMergeCart } = require('../utils/unAuthMergeCart');
+const semiAuth = require('../middleware/semiAuth');
 
 // 创建Redis客户端
 const redisClient = redis.createClient({
@@ -72,40 +69,75 @@ api.get("/", (req, resp) => {
 //--------------------------------------------------------------------------------------------------//
 
 api.get("/api", async (req, res) => {
+	const page = parseInt(req.query.page) || 1;
+	const limit = parseInt(req.query.limit) || 20;
+	const skip = (page - 1) * limit;
+	const sort = req.query.sort || "default";
+
+	// 1. 建立獨特的快取鍵
+	const cacheKey = `meals:page:${page}:limit:${limit}:sort:${sort}`;
+
 	try {
-		const page = parseInt(req.query.page) || 1;
-		const limit = parseInt(req.query.limit) || 20;
-		const skip = (page - 1) * limit;
-		const sort = req.query.sort || "default"
+		// 2. 嘗試從 Redis 讀取快取
+		const cachedData = await redisClient.get(cacheKey);
+		if (cachedData) {
+			console.log('Cache hit for /api');
+			return res.status(201).json(JSON.parse(cachedData));
+		}
 
+		console.log('Cache miss for /api. Querying MongoDB...');
 
-		let category = await Meal.distinct("category");
-
-		//sort by url
-		let sortedData
+		let sortedData;
 		switch (sort) {
 			case 'asc':
 				sortedData = await Meal.find().sort({ price: 1 }).skip(skip).limit(limit);
-				break
+				break;
 			case 'dsc':
 				sortedData = await Meal.find().sort({ price: -1 }).skip(skip).limit(limit);
-				break
+				break;
 			default:
 				sortedData = await Meal.find().skip(skip).limit(limit);
 		}
 
-		res.status(201).json({ "category": category, "data": sortedData });
+		// 獲取類別資訊，這個部分也可以快取
+		const category = await Meal.distinct("category");
+
+		const result = { "category": category, "data": sortedData };
+
+		// 3. 將資料寫入 Redis 快取，設定過期時間(TTL:60分鐘)
+		await setAsync(cacheKey, JSON.stringify(result), { 'EX': 1800 });
+
+		res.status(201).json(result);
+
 	} catch (err) {
-		console.log("Error: " + err.message);
+		console.error("Error: " + err.message);
+		res.status(500).json({ error: "Internal Server Error" });
 	}
 });
+
 
 //--------------------------------------------------------------------------------------------------//
 
 api.get('/order', async (req, res) => {
+	const categoryId = req.query.category
+	const sort = req.query.sort || "default"
+	const cacheCategoryKey = `meal:category`
+	const cacheSortKey = `meal:sort:${sort}`
 	try {
-		const sort = req.query.sort || "default"
+
+
+		const cachedCategoryData = await getAsync(cacheCategoryKey)
+		const cachedSortData = await getAsync(cacheSortKey)
+
+		if (cachedCategoryData && cachedSortData) {
+			console.log('Cache hit for /order');
+			return res.status(200).json({ "category": JSON.parse(cachedCategoryData), "data": JSON.parse(cachedSortData) });
+		}
+
+
+		console.log('Cache miss for /order. Querying MongoDB...');
 		let category = await Meal.distinct("category")
+		await setAsync(cacheCategoryKey, JSON.stringify(category), { 'EX': 1800 })
 		//sort by url
 		let sortedData
 		switch (sort) {
@@ -118,6 +150,7 @@ api.get('/order', async (req, res) => {
 			default:
 				sortedData = await Meal.find({ category: req.query.category })
 		}
+		await setAsync(cacheSortKey, JSON.stringify(sortedData), { 'EX': 1800 })
 
 		res.status(201).json({ "category": category, "data": sortedData });
 	} catch (err) {
@@ -272,56 +305,8 @@ api.post("/addToCart", authenticate, async (req, res) => {
 	console.log(result);
 });
 
-// 新增API端点处理check state的变更，保存到Redis
+// 新增API端点处理check state的變更，保存到Redis
 //https://myapollo.com.tw/blog/interview-question-cache-patterns/
-
-//使用write through策略
-// api.post("/updateCheckState", authenticate, async (req, res) => {
-// 	try {
-// 		// 1. 驗證授權和請求參數
-// 		const authHeader = req.headers['authorization'];
-// 		if (!authHeader) return res.status(401).send({ status: "error", message: "Authorization header missing" });
-
-// 		const accessToken = authHeader.split(' ')[1];
-// 		const email = jwtDecode(accessToken)?.email;
-// 		if (!email) return res.status(401).send({ status: "error", message: "Invalid token" });
-
-// 		const { updatedItems } = req.body;
-// 		if (!updatedItems || !Array.isArray(updatedItems)) {
-// 			return res.status(400).send({ status: "error", message: "Invalid request body" });
-// 		}
-// 		const result = await updateCartCheckedState(email, updatedItems);
-// 		console.log(result, "result");
-// 		res.status(200).send({ status: "ok", result: result })
-// 	} catch (error) {
-// 		console.error("Error:", error);
-// 		res.status(500).send({ status: "error", message: error.message });
-// 	}
-// });
-
-
-// api.post("/updateCartItem", authenticate, async (req, res) => {
-// 	try {
-// 		// 1. 驗證授權和請求參數
-// 		const authHeader = req.headers['authorization'];
-// 		if (!authHeader) return res.status(401).send({ status: "error", message: "Authorization header missing" });
-
-// 		const accessToken = authHeader.split(' ')[1];
-// 		const email = jwtDecode(accessToken)?.email;
-// 		if (!email) return res.status(401).send({ status: "error", message: "Invalid token" });
-
-// 		const { updatedItems } = req.body;
-// 		if (!updatedItems || !Array.isArray(updatedItems)) {
-// 			return res.status(400).send({ status: "error", message: "Invalid request body" });
-// 		}
-// 		const result = await updateCartItem(email, updatedItems);
-// 		console.log(result, "result", updatedItems, "updatedItems");
-// 		res.status(200).send({ status: "ok", result: result })
-// 	} catch (error) {
-// 		console.error("Error:", error);
-// 		res.status(500).send({ status: "error", message: error.message });
-// 	}
-// });
 
 //使用write through策略
 api.post("/updateCart", authenticate, async (req, res) => {

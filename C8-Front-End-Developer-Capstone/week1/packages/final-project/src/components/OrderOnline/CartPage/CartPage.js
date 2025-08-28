@@ -17,24 +17,6 @@ import { toast } from 'react-toastify'; //import toast
 import { Modal, ModalButton, ModalContent } from '../../provider/ModalsSystem';
 import LoginRotate from '../../Register/LoginRotate';
 import { useCartPage } from './CartPageContext';
-const CARTPAGE_QUERY = gql`
-    query CartPageformat($email: String) {
-    cartpageformat(email: $email) {
-        totalAmount
-        totalItem
-        checkedAmount
-        checkedItem
-        data {
-        strMeal
-        numMeal
-        idMeal
-        baseAmount
-        strMealThumb
-        checked
-        }
-    }
-    }
-`;
 
 // init IndexedDB
 const initDB = async () => {

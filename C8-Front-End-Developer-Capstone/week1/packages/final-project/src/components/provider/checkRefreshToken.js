@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const checkRefreshToken = async (accessToken) => {
   try {
-    const result = await axiosInstance(accessToken).post("http://localhost:5000/login2/check-refresh-token");
+    const result = await axiosInstance(accessToken).post("http://localhost:5000/login/check-refresh-token");
     if (result.status === 200) {
       const newAccessToken = result.data.accessToken;
       localStorage.setItem("accessToken", newAccessToken);
